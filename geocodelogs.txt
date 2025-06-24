@@ -3121,3 +3121,13 @@
 [2025-06-24 19:09:40] All geocoding attempts failed for: street=91, Abbington Ave, Abbington Ave, city=Bedford, province=Nova Scotia
 [2025-06-24 19:09:40] Bulk geocoding: Failed to geocode address for user 815 (suffix: _3)
 [2025-06-24 19:09:40] Bulk geocoding completed: 130 processed, 99 successful, 290s
+[2025-06-24 20:18:44] Trying geocode for: 123 Main St, Halifax, Nova Scotia, Canada
+[2025-06-24 20:18:44] Making API request to: https://nominatim.openstreetmap.org/search?q=123+Main+St%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 20:18:44] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=123+Main+St%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 20:19:01] Trying geocode for: 123 Main St, Halifax, Nova Scotia, Canada
+[2025-06-24 20:19:01] Making API request to: https://nominatim.openstreetmap.org/search?q=123+Main+St%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 20:19:01] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=123+Main+St%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 20:19:01] API Response: Code 200 - OK
+[2025-06-24 20:19:01] API returned 1 results
+[2025-06-24 20:19:01] Geocoding successful: lat=44.6488, lng=-63.5752, display_name='Halifax, Nova Scotia, Canada', type='city'
+[2025-06-24 20:19:01] Successfully geocoded: 123 Main St, Halifax, Nova Scotia, Canada
