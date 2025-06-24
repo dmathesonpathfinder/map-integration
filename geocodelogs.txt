@@ -1,0 +1,588 @@
+[2025-06-24 18:02:20] Starting bulk geocoding batch (max 200 requests)
+[2025-06-24 18:02:20] Debug: Checking address set with suffix ''
+[2025-06-24 18:02:20] Debug: Found 100 users with street address for suffix '' (limited to 5 for testing)
+[2025-06-24 18:02:20] Debug: User 618 needs geocoding for suffix ''
+[2025-06-24 18:02:20] Debug: User 618 address: street='1567 Grafton Street', city='Haliax', province='ns'
+[2025-06-24 18:02:20] Debug: Processing user 618 for geocoding...
+[2025-06-24 18:02:20] Trying geocode for: 1567 Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-24 18:02:20] Making API request to: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:20] API Response: Code 200 - OK
+[2025-06-24 18:02:20] API returned 0 results
+[2025-06-24 18:02:20] No geocoding results found for address: 1567 Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-24 18:02:20] Trying geocode for: 1567 Grafton Street, Haliax, Nova Scotia
+[2025-06-24 18:02:21] Making API request to: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:22] API Response: Code 200 - OK
+[2025-06-24 18:02:22] API returned 0 results
+[2025-06-24 18:02:22] No geocoding results found for address: 1567 Grafton Street, Haliax, Nova Scotia
+[2025-06-24 18:02:22] Trying geocode for: Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-24 18:02:22] Making API request to: https://nominatim.openstreetmap.org/search?q=Grafton+Street%2C+Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:23] API Response: Code 200 - OK
+[2025-06-24 18:02:23] API returned 0 results
+[2025-06-24 18:02:23] No geocoding results found for address: Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-24 18:02:23] Trying geocode for: Haliax, Nova Scotia, Canada
+[2025-06-24 18:02:23] Making API request to: https://nominatim.openstreetmap.org/search?q=Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:24] API Response: Code 200 - OK
+[2025-06-24 18:02:24] API returned 0 results
+[2025-06-24 18:02:24] No geocoding results found for address: Haliax, Nova Scotia, Canada
+[2025-06-24 18:02:24] Trying geocode for: Haliax, Nova Scotia
+[2025-06-24 18:02:24] Making API request to: https://nominatim.openstreetmap.org/search?q=Haliax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:25] API Response: Code 200 - OK
+[2025-06-24 18:02:25] API returned 0 results
+[2025-06-24 18:02:25] No geocoding results found for address: Haliax, Nova Scotia
+[2025-06-24 18:02:25] Trying geocode for: Nova Scotia, Canada
+[2025-06-24 18:02:25] Making API request to: https://nominatim.openstreetmap.org/search?q=Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:26] API Response: Code 200 - OK
+[2025-06-24 18:02:26] API returned 1 results
+[2025-06-24 18:02:26] Geocoding successful: lat=45.1960403, lng=-63.1653789, display_name='Nova Scotia, Canada', type='administrative'
+[2025-06-24 18:02:26] Successfully geocoded: Nova Scotia, Canada
+[2025-06-24 18:02:26] Bulk geocoding: Successfully geocoded address for user 618 (suffix: )
+[2025-06-24 18:02:26] Debug: User 619 needs geocoding for suffix ''
+[2025-06-24 18:02:26] Debug: User 619 address: street='Fall River Rd', city='Fall River', province='ns'
+[2025-06-24 18:02:26] Debug: Processing user 619 for geocoding...
+[2025-06-24 18:02:26] Trying geocode for: Fall River Rd, Fall River, Nova Scotia, Canada
+[2025-06-24 18:02:26] Making API request to: https://nominatim.openstreetmap.org/search?q=Fall+River+Rd%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:27] API Response: Code 200 - OK
+[2025-06-24 18:02:27] API returned 1 results
+[2025-06-24 18:02:27] Geocoding successful: lat=44.8080393, lng=-63.6199608, display_name='Fall River Road, Tamarac Hills, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1E6, Canada', type='secondary'
+[2025-06-24 18:02:27] Successfully geocoded: Fall River Rd, Fall River, Nova Scotia, Canada
+[2025-06-24 18:02:27] Bulk geocoding: Successfully geocoded address for user 619 (suffix: )
+[2025-06-24 18:02:27] Debug: User 620 needs geocoding for suffix ''
+[2025-06-24 18:02:27] Debug: User 620 address: street='2-3290 Hwy 2', city='Fall River', province='ns'
+[2025-06-24 18:02:27] Debug: Processing user 620 for geocoding...
+[2025-06-24 18:02:27] Trying geocode for: 2-3290 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-24 18:02:27] Making API request to: https://nominatim.openstreetmap.org/search?q=2-3290+Hwy+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:28] API Response: Code 200 - OK
+[2025-06-24 18:02:28] API returned 1 results
+[2025-06-24 18:02:28] Geocoding successful: lat=44.8173683, lng=-63.6101317, display_name='Pet Valu, 3290, Highway 2, Fall River Plaza, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1J5, Canada', type='pet'
+[2025-06-24 18:02:28] Successfully geocoded: 2-3290 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-24 18:02:28] Bulk geocoding: Successfully geocoded address for user 620 (suffix: )
+[2025-06-24 18:02:28] Debug: User 621 needs geocoding for suffix ''
+[2025-06-24 18:02:28] Debug: User 621 address: street='1160 Bedford Highway', city='Bedford', province='ns'
+[2025-06-24 18:02:28] Debug: Processing user 621 for geocoding...
+[2025-06-24 18:02:28] Trying geocode for: 1160 Bedford Highway, Bedford, Nova Scotia, Canada
+[2025-06-24 18:02:28] Making API request to: https://nominatim.openstreetmap.org/search?q=1160+Bedford+Highway%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:29] API Response: Code 200 - OK
+[2025-06-24 18:02:29] API returned 1 results
+[2025-06-24 18:02:29] Geocoding successful: lat=44.7217218, lng=-63.6718357, display_name='1160, Bedford Highway, Basinview, Bedford, Halifax Regional Municipality, Halifax County, Nova Scotia, B4A 1C1, Canada', type='yes'
+[2025-06-24 18:02:29] Successfully geocoded: 1160 Bedford Highway, Bedford, Nova Scotia, Canada
+[2025-06-24 18:02:29] Bulk geocoding: Successfully geocoded address for user 621 (suffix: )
+[2025-06-24 18:02:29] Debug: User 622 needs geocoding for suffix ''
+[2025-06-24 18:02:29] Debug: User 622 address: street='6112 Willow Street', city='Halifax', province='ns'
+[2025-06-24 18:02:29] Debug: Processing user 622 for geocoding...
+[2025-06-24 18:02:29] Trying geocode for: 6112 Willow Street, Halifax, Nova Scotia, Canada
+[2025-06-24 18:02:29] Making API request to: https://nominatim.openstreetmap.org/search?q=6112+Willow+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:30] API Response: Code 200 - OK
+[2025-06-24 18:02:30] API returned 1 results
+[2025-06-24 18:02:30] Geocoding successful: lat=44.6529255, lng=-63.5956369, display_name='6112, Willow Street, Downtown Halifax, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 1M2, Canada', type='house'
+[2025-06-24 18:02:30] Successfully geocoded: 6112 Willow Street, Halifax, Nova Scotia, Canada
+[2025-06-24 18:02:30] Bulk geocoding: Successfully geocoded address for user 622 (suffix: )
+[2025-06-24 18:02:30] Debug: User 623 needs geocoding for suffix ''
+[2025-06-24 18:02:30] Debug: User 623 address: street='33 Ochterloney St.', city='Dartmouth', province='ns'
+[2025-06-24 18:02:30] Debug: Processing user 623 for geocoding...
+[2025-06-24 18:02:30] Trying geocode for: 33 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-24 18:02:30] Making API request to: https://nominatim.openstreetmap.org/search?q=33+Ochterloney+Street%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:31] API Response: Code 200 - OK
+[2025-06-24 18:02:31] API returned 1 results
+[2025-06-24 18:02:31] Geocoding successful: lat=44.6663207, lng=-63.5691825, display_name='Quaker Landing, 33, Ochterloney Street, Park Avenue, Downtown Dartmouth, Dartmouth, Halifax Regional Municipality, Halifax County, Nova Scotia, B2Y 2P5, Canada', type='office'
+[2025-06-24 18:02:31] Successfully geocoded: 33 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-24 18:02:31] Bulk geocoding: Successfully geocoded address for user 623 (suffix: )
+[2025-06-24 18:02:31] Debug: User 624 needs geocoding for suffix ''
+[2025-06-24 18:02:31] Debug: User 624 address: street='3667 Strawberry Hill Street', city='Halifax', province='ns'
+[2025-06-24 18:02:31] Debug: Processing user 624 for geocoding...
+[2025-06-24 18:02:31] Trying geocode for: 3667 Strawberry Hill Street, Halifax, Nova Scotia, Canada
+[2025-06-24 18:02:31] Making API request to: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:32] API Response: Code 200 - OK
+[2025-06-24 18:02:32] API returned 1 results
+[2025-06-24 18:02:32] Geocoding successful: lat=44.6619829, lng=-63.6194088, display_name='3667, Strawberry Hill Street, Convoy Place, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 5A8, Canada', type='commercial'
+[2025-06-24 18:02:32] Successfully geocoded: 3667 Strawberry Hill Street, Halifax, Nova Scotia, Canada
+[2025-06-24 18:02:32] Bulk geocoding: Successfully geocoded address for user 624 (suffix: )
+[2025-06-24 18:02:32] Debug: User 625 needs geocoding for suffix ''
+[2025-06-24 18:02:32] Debug: User 625 address: street='166 North Street', city='Bridgewater', province='ns'
+[2025-06-24 18:02:32] Debug: Processing user 625 for geocoding...
+[2025-06-24 18:02:32] Trying geocode for: 166 North Street, Bridgewater, Nova Scotia, Canada
+[2025-06-24 18:02:32] Making API request to: https://nominatim.openstreetmap.org/search?q=166+North+Street%2C+Bridgewater%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:33] API Response: Code 200 - OK
+[2025-06-24 18:02:33] API returned 1 results
+[2025-06-24 18:02:33] Geocoding successful: lat=44.3883021, lng=-64.5204877, display_name='166, North Street, Bridgewater, Municipality of the District of Lunenburg, Lunenburg County, Nova Scotia, B4V 0A0, Canada', type='house'
+[2025-06-24 18:02:33] Successfully geocoded: 166 North Street, Bridgewater, Nova Scotia, Canada
+[2025-06-24 18:02:33] Bulk geocoding: Successfully geocoded address for user 625 (suffix: )
+[2025-06-24 18:02:33] Debug: User 626 needs geocoding for suffix ''
+[2025-06-24 18:02:33] Debug: User 626 address: street='3-850 Grand Lake Road', city='Sydney', province='ns'
+[2025-06-24 18:02:33] Debug: Processing user 626 for geocoding...
+[2025-06-24 18:02:33] Trying geocode for: 3-850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-24 18:02:33] Making API request to: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:37] API Response: Code 200 - OK
+[2025-06-24 18:02:37] API returned 0 results
+[2025-06-24 18:02:37] No geocoding results found for address: 3-850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-24 18:02:37] Trying geocode for: 3-850 Grand Lake Road, Sydney, Nova Scotia
+[2025-06-24 18:02:37] Making API request to: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:39] API Response: Code 200 - OK
+[2025-06-24 18:02:39] API returned 0 results
+[2025-06-24 18:02:39] No geocoding results found for address: 3-850 Grand Lake Road, Sydney, Nova Scotia
+[2025-06-24 18:02:39] Trying geocode for: -850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-24 18:02:39] Making API request to: https://nominatim.openstreetmap.org/search?q=-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:40] API Response: Code 200 - OK
+[2025-06-24 18:02:40] API returned 1 results
+[2025-06-24 18:02:40] Geocoding successful: lat=46.1493864, lng=-60.1364248, display_name='MacLeod Optical & Vision Centre, 850, Grand Lake Road, Sydney, Cape Breton Regional Municipality, Cape Breton County, Nova Scotia, B1P 5T9, Canada', type='optician'
+[2025-06-24 18:02:40] Successfully geocoded: -850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-24 18:02:40] Bulk geocoding: Successfully geocoded address for user 626 (suffix: )
+[2025-06-24 18:02:40] Debug: User 627 needs geocoding for suffix ''
+[2025-06-24 18:02:40] Debug: User 627 address: street='22 Market Street', city='Liverpool', province='ns'
+[2025-06-24 18:02:40] Debug: Processing user 627 for geocoding...
+[2025-06-24 18:02:40] Trying geocode for: 22 Market Street, Liverpool, Nova Scotia, Canada
+[2025-06-24 18:02:40] Making API request to: https://nominatim.openstreetmap.org/search?q=22+Market+Street%2C+Liverpool%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:41] API Response: Code 200 - OK
+[2025-06-24 18:02:41] API returned 1 results
+[2025-06-24 18:02:41] Geocoding successful: lat=44.0395784, lng=-64.714965, display_name='22, Market Street, Liverpool, Region of Queens Municipality, Queens County, Nova Scotia, B0T 1K0, Canada', type='house'
+[2025-06-24 18:02:41] Successfully geocoded: 22 Market Street, Liverpool, Nova Scotia, Canada
+[2025-06-24 18:02:42] Bulk geocoding: Successfully geocoded address for user 627 (suffix: )
+[2025-06-24 18:02:42] Debug: User 628 needs geocoding for suffix ''
+[2025-06-24 18:02:42] Debug: User 628 address: street='3667 Strawberry Hill St', city='Halifax', province='ns'
+[2025-06-24 18:02:42] Debug: Processing user 628 for geocoding...
+[2025-06-24 18:02:42] Trying geocode for: 3667 Strawberry Hill St, Halifax, Nova Scotia, Canada
+[2025-06-24 18:02:42] Making API request to: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+St%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:42] API Response: Code 200 - OK
+[2025-06-24 18:02:42] API returned 1 results
+[2025-06-24 18:02:42] Geocoding successful: lat=44.6619829, lng=-63.6194088, display_name='3667, Strawberry Hill Street, Convoy Place, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 5A8, Canada', type='commercial'
+[2025-06-24 18:02:42] Successfully geocoded: 3667 Strawberry Hill St, Halifax, Nova Scotia, Canada
+[2025-06-24 18:02:42] Bulk geocoding: Successfully geocoded address for user 628 (suffix: )
+[2025-06-24 18:02:42] Debug: User 629 needs geocoding for suffix ''
+[2025-06-24 18:02:42] Debug: User 629 address: street='165 Hammonds Plains Road', city='Bedford', province='ns'
+[2025-06-24 18:02:42] Debug: Processing user 629 for geocoding...
+[2025-06-24 18:02:42] Trying geocode for: 165 Hammonds Plains Road, Bedford, Nova Scotia, Canada
+[2025-06-24 18:02:43] Making API request to: https://nominatim.openstreetmap.org/search?q=165+Hammonds+Plains+Road%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:45] API Response: Code 200 - OK
+[2025-06-24 18:02:45] API returned 1 results
+[2025-06-24 18:02:45] Geocoding successful: lat=44.7191258, lng=-63.6851937, display_name='165, Hammonds Plains Road, Mill Cove, Bedford, Halifax Regional Municipality, Halifax County, Nova Scotia, B4A 4C7, Canada', type='yes'
+[2025-06-24 18:02:45] Successfully geocoded: 165 Hammonds Plains Road, Bedford, Nova Scotia, Canada
+[2025-06-24 18:02:45] Bulk geocoding: Successfully geocoded address for user 629 (suffix: )
+[2025-06-24 18:02:45] Debug: User 630 needs geocoding for suffix ''
+[2025-06-24 18:02:45] Debug: User 630 address: street='155-200 Ochterloney Street', city='Dartmouth', province='ns'
+[2025-06-24 18:02:45] Debug: Processing user 630 for geocoding...
+[2025-06-24 18:02:45] Trying geocode for: 155-200 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-24 18:02:45] Making API request to: https://nominatim.openstreetmap.org/search?q=155-200+Ochterloney+Street%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:46] API Response: Code 200 - OK
+[2025-06-24 18:02:46] API returned 1 results
+[2025-06-24 18:02:46] Geocoding successful: lat=44.6695699, lng=-63.5649974, display_name='Ochterloney Street, Cheltonham Court, Downtown Dartmouth Business District, Downtown Dartmouth, Dartmouth, Halifax Regional Municipality, Halifax County, Nova Scotia, B2Y 0B7, Canada', type='secondary'
+[2025-06-24 18:02:46] Successfully geocoded: 155-200 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-24 18:02:46] Bulk geocoding: Successfully geocoded address for user 630 (suffix: )
+[2025-06-24 18:02:46] Debug: User 631 needs geocoding for suffix ''
+[2025-06-24 18:02:46] Debug: User 631 address: street='397 Bedford Highway, Suite 306A in Many Hats Workspace', city='Halifax, NS B3M 2L3', province='ns'
+[2025-06-24 18:02:46] Debug: Processing user 631 for geocoding...
+[2025-06-24 18:02:46] Trying geocode for: 397 Bedford Highway, Suite 306A in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:46] Making API request to: https://nominatim.openstreetmap.org/search?q=397+Bedford+Highway%2C+Suite+306A+in+Many+Hats+Workspace%2C+Halifax%2C+NS+B3M+2L3%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:47] API Response: Code 200 - OK
+[2025-06-24 18:02:47] API returned 0 results
+[2025-06-24 18:02:47] No geocoding results found for address: 397 Bedford Highway, Suite 306A in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:47] Trying geocode for: 397 Bedford Highway, Suite 306A in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia
+[2025-06-24 18:02:47] Making API request to: https://nominatim.openstreetmap.org/search?q=397+Bedford+Highway%2C+Suite+306A+in+Many+Hats+Workspace%2C+Halifax%2C+NS+B3M+2L3%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:49] API Response: Code 200 - OK
+[2025-06-24 18:02:49] API returned 0 results
+[2025-06-24 18:02:49] No geocoding results found for address: 397 Bedford Highway, Suite 306A in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia
+[2025-06-24 18:02:49] Trying geocode for: 397 Bedford Highway, in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:49] Making API request to: https://nominatim.openstreetmap.org/search?q=397+Bedford+Highway%2C+in+Many+Hats+Workspace%2C+Halifax%2C+NS+B3M+2L3%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:51] API Response: Code 200 - OK
+[2025-06-24 18:02:51] API returned 0 results
+[2025-06-24 18:02:51] No geocoding results found for address: 397 Bedford Highway, in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:51] Trying geocode for: 397 Bedford Highway, in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia
+[2025-06-24 18:02:51] Making API request to: https://nominatim.openstreetmap.org/search?q=397+Bedford+Highway%2C+in+Many+Hats+Workspace%2C+Halifax%2C+NS+B3M+2L3%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:53] API Response: Code 200 - OK
+[2025-06-24 18:02:53] API returned 0 results
+[2025-06-24 18:02:53] No geocoding results found for address: 397 Bedford Highway, in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia
+[2025-06-24 18:02:53] Trying geocode for: Bedford Highway, Suite 306A in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:53] Making API request to: https://nominatim.openstreetmap.org/search?q=Bedford+Highway%2C+Suite+306A+in+Many+Hats+Workspace%2C+Halifax%2C+NS+B3M+2L3%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:54] API Response: Code 200 - OK
+[2025-06-24 18:02:54] API returned 0 results
+[2025-06-24 18:02:54] No geocoding results found for address: Bedford Highway, Suite 306A in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:54] Trying geocode for: Bedford Highway, in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:54] Making API request to: https://nominatim.openstreetmap.org/search?q=Bedford+Highway%2C+in+Many+Hats+Workspace%2C+Halifax%2C+NS+B3M+2L3%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:56] API Response: Code 200 - OK
+[2025-06-24 18:02:56] API returned 0 results
+[2025-06-24 18:02:56] No geocoding results found for address: Bedford Highway, in Many Hats Workspace, Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:56] Trying geocode for: Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:56] Making API request to: https://nominatim.openstreetmap.org/search?q=Halifax%2C+NS+B3M+2L3%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:56] API Response: Code 200 - OK
+[2025-06-24 18:02:56] API returned 1 results
+[2025-06-24 18:02:56] Geocoding successful: lat=44.648618, lng=-63.5859487, display_name='Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, Canada', type='administrative'
+[2025-06-24 18:02:56] Successfully geocoded: Halifax, NS B3M 2L3, Nova Scotia, Canada
+[2025-06-24 18:02:56] Bulk geocoding: Successfully geocoded address for user 631 (suffix: )
+[2025-06-24 18:02:56] Debug: User 632 needs geocoding for suffix ''
+[2025-06-24 18:02:56] Debug: User 632 address: street='973 Cole Harbour Road', city='Dartmouth', province='ns'
+[2025-06-24 18:02:56] Debug: Processing user 632 for geocoding...
+[2025-06-24 18:02:56] Trying geocode for: 973 Cole Harbour Road, Dartmouth, Nova Scotia, Canada
+[2025-06-24 18:02:58] Making API request to: https://nominatim.openstreetmap.org/search?q=973+Cole+Harbour+Road%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:02:59] API Response: Code 200 - OK
+[2025-06-24 18:02:59] API returned 1 results
+[2025-06-24 18:02:59] Geocoding successful: lat=44.67119, lng=-63.5000467, display_name='Cole Harbour Road, Highland Acres, Woodlawn, Cole Harbour, Halifax Regional Municipality, Halifax County, Nova Scotia, B2V 1E5, Canada', type='secondary'
+[2025-06-24 18:02:59] Successfully geocoded: 973 Cole Harbour Road, Dartmouth, Nova Scotia, Canada
+[2025-06-24 18:02:59] Bulk geocoding: Successfully geocoded address for user 632 (suffix: )
+[2025-06-24 18:02:59] Debug: User 633 needs geocoding for suffix ''
+[2025-06-24 18:02:59] Debug: User 633 address: street='1 Commercial street', city='truro', province='ns'
+[2025-06-24 18:02:59] Debug: Processing user 633 for geocoding...
+[2025-06-24 18:02:59] Trying geocode for: 1 Commercial street, truro, Nova Scotia, Canada
+[2025-06-24 18:02:59] Making API request to: https://nominatim.openstreetmap.org/search?q=1+Commercial+street%2C+truro%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:00] API Response: Code 200 - OK
+[2025-06-24 18:03:00] API returned 1 results
+[2025-06-24 18:03:00] Geocoding successful: lat=45.3667396, lng=-63.2863913, display_name='1, Commercial Street, McClures Mills, Truro, Town of Truro, Colchester County, Nova Scotia, B2N 1E8, Canada', type='house'
+[2025-06-24 18:03:00] Successfully geocoded: 1 Commercial street, truro, Nova Scotia, Canada
+[2025-06-24 18:03:00] Bulk geocoding: Successfully geocoded address for user 633 (suffix: )
+[2025-06-24 18:03:00] Debug: User 634 needs geocoding for suffix ''
+[2025-06-24 18:03:00] Debug: User 634 address: street='1 Commercial St. Unit 104', city='Truro', province='ns'
+[2025-06-24 18:03:00] Debug: Processing user 634 for geocoding...
+[2025-06-24 18:03:00] Trying geocode for: 1 Commercial Street Unit 104, Truro, Nova Scotia, Canada
+[2025-06-24 18:03:00] Making API request to: https://nominatim.openstreetmap.org/search?q=1+Commercial+Street+Unit+104%2C+Truro%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:02] API Response: Code 200 - OK
+[2025-06-24 18:03:02] API returned 0 results
+[2025-06-24 18:03:02] No geocoding results found for address: 1 Commercial Street Unit 104, Truro, Nova Scotia, Canada
+[2025-06-24 18:03:02] Trying geocode for: 1 Commercial Street Unit 104, Truro, Nova Scotia
+[2025-06-24 18:03:02] Making API request to: https://nominatim.openstreetmap.org/search?q=1+Commercial+Street+Unit+104%2C+Truro%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:06] API Response: Code 200 - OK
+[2025-06-24 18:03:06] API returned 0 results
+[2025-06-24 18:03:06] No geocoding results found for address: 1 Commercial Street Unit 104, Truro, Nova Scotia
+[2025-06-24 18:03:06] Trying geocode for: 1 Commercial Street, Truro, Nova Scotia, Canada
+[2025-06-24 18:03:06] Making API request to: https://nominatim.openstreetmap.org/search?q=1+Commercial+Street%2C+Truro%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:08] API Response: Code 200 - OK
+[2025-06-24 18:03:08] API returned 1 results
+[2025-06-24 18:03:08] Geocoding successful: lat=45.3667396, lng=-63.2863913, display_name='1, Commercial Street, McClures Mills, Truro, Town of Truro, Colchester County, Nova Scotia, B2N 1E8, Canada', type='house'
+[2025-06-24 18:03:08] Successfully geocoded: 1 Commercial Street, Truro, Nova Scotia, Canada
+[2025-06-24 18:03:08] Bulk geocoding: Successfully geocoded address for user 634 (suffix: )
+[2025-06-24 18:03:08] Debug: User 635 needs geocoding for suffix ''
+[2025-06-24 18:03:08] Debug: User 635 address: street='201-362 Lacewood Drive', city='Halifax', province='ns'
+[2025-06-24 18:03:08] Debug: Processing user 635 for geocoding...
+[2025-06-24 18:03:08] Trying geocode for: 201-362 Lacewood Drive, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:08] Making API request to: https://nominatim.openstreetmap.org/search?q=201-362+Lacewood+Drive%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:10] API Response: Code 200 - OK
+[2025-06-24 18:03:10] API returned 0 results
+[2025-06-24 18:03:10] No geocoding results found for address: 201-362 Lacewood Drive, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:10] Trying geocode for: 201-362 Lacewood Drive, Halifax, Nova Scotia
+[2025-06-24 18:03:10] Making API request to: https://nominatim.openstreetmap.org/search?q=201-362+Lacewood+Drive%2C+Halifax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:12] API Response: Code 200 - OK
+[2025-06-24 18:03:12] API returned 0 results
+[2025-06-24 18:03:12] No geocoding results found for address: 201-362 Lacewood Drive, Halifax, Nova Scotia
+[2025-06-24 18:03:12] Trying geocode for: -362 Lacewood Drive, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:12] Making API request to: https://nominatim.openstreetmap.org/search?q=-362+Lacewood+Drive%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:13] API Response: Code 200 - OK
+[2025-06-24 18:03:13] API returned 1 results
+[2025-06-24 18:03:13] Geocoding successful: lat=44.6575313, lng=-63.6697251, display_name='362, Lacewood Drive, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3S 1T3, Canada', type='yes'
+[2025-06-24 18:03:13] Successfully geocoded: -362 Lacewood Drive, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:13] Bulk geocoding: Successfully geocoded address for user 635 (suffix: )
+[2025-06-24 18:03:13] Debug: User 636 needs geocoding for suffix ''
+[2025-06-24 18:03:13] Debug: User 636 address: street='105 Dartmouth Road, Bedford', city='https://eaglewoodchiro.ca/', province='ns'
+[2025-06-24 18:03:13] Debug: Processing user 636 for geocoding...
+[2025-06-24 18:03:13] Trying geocode for: 105 Dartmouth Road, Bedford, https://eaglewoodchiro.ca/, Nova Scotia, Canada
+[2025-06-24 18:03:13] Making API request to: https://nominatim.openstreetmap.org/search?q=105+Dartmouth+Road%2C+Bedford%2C+https%3A%2F%2Feaglewoodchiro.ca%2F%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:14] API Response: Code 200 - OK
+[2025-06-24 18:03:14] API returned 0 results
+[2025-06-24 18:03:14] No geocoding results found for address: 105 Dartmouth Road, Bedford, https://eaglewoodchiro.ca/, Nova Scotia, Canada
+[2025-06-24 18:03:14] Trying geocode for: 105 Dartmouth Road, Bedford, https://eaglewoodchiro.ca/, Nova Scotia
+[2025-06-24 18:03:14] Making API request to: https://nominatim.openstreetmap.org/search?q=105+Dartmouth+Road%2C+Bedford%2C+https%3A%2F%2Feaglewoodchiro.ca%2F%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:15] API Response: Code 200 - OK
+[2025-06-24 18:03:15] API returned 0 results
+[2025-06-24 18:03:15] No geocoding results found for address: 105 Dartmouth Road, Bedford, https://eaglewoodchiro.ca/, Nova Scotia
+[2025-06-24 18:03:15] Trying geocode for: Dartmouth Road, Bedford, https://eaglewoodchiro.ca/, Nova Scotia, Canada
+[2025-06-24 18:03:15] Making API request to: https://nominatim.openstreetmap.org/search?q=Dartmouth+Road%2C+Bedford%2C+https%3A%2F%2Feaglewoodchiro.ca%2F%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:17] API Response: Code 200 - OK
+[2025-06-24 18:03:17] API returned 0 results
+[2025-06-24 18:03:17] No geocoding results found for address: Dartmouth Road, Bedford, https://eaglewoodchiro.ca/, Nova Scotia, Canada
+[2025-06-24 18:03:17] Trying geocode for: https://eaglewoodchiro.ca/, Nova Scotia, Canada
+[2025-06-24 18:03:17] Making API request to: https://nominatim.openstreetmap.org/search?q=https%3A%2F%2Feaglewoodchiro.ca%2F%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:19] API Response: Code 200 - OK
+[2025-06-24 18:03:19] API returned 0 results
+[2025-06-24 18:03:19] No geocoding results found for address: https://eaglewoodchiro.ca/, Nova Scotia, Canada
+[2025-06-24 18:03:19] Trying geocode for: https://eaglewoodchiro.ca/, Nova Scotia
+[2025-06-24 18:03:19] Making API request to: https://nominatim.openstreetmap.org/search?q=https%3A%2F%2Feaglewoodchiro.ca%2F%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:19] API Response: Code 200 - OK
+[2025-06-24 18:03:19] API returned 0 results
+[2025-06-24 18:03:19] No geocoding results found for address: https://eaglewoodchiro.ca/, Nova Scotia
+[2025-06-24 18:03:19] Trying geocode for: Nova Scotia, Canada
+[2025-06-24 18:03:20] Making API request to: https://nominatim.openstreetmap.org/search?q=Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:21] API Response: Code 200 - OK
+[2025-06-24 18:03:21] API returned 1 results
+[2025-06-24 18:03:21] Geocoding successful: lat=45.1960403, lng=-63.1653789, display_name='Nova Scotia, Canada', type='administrative'
+[2025-06-24 18:03:21] Successfully geocoded: Nova Scotia, Canada
+[2025-06-24 18:03:21] Bulk geocoding: Successfully geocoded address for user 636 (suffix: )
+[2025-06-24 18:03:21] Debug: User 637 needs geocoding for suffix ''
+[2025-06-24 18:03:21] Debug: User 637 address: street='560 Windmill Road', city='Dartmouth', province='ns'
+[2025-06-24 18:03:21] Debug: Processing user 637 for geocoding...
+[2025-06-24 18:03:21] Trying geocode for: 560 Windmill Road, Dartmouth, Nova Scotia, Canada
+[2025-06-24 18:03:21] Making API request to: https://nominatim.openstreetmap.org/search?q=560+Windmill+Road%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:24] API Response: Code 200 - OK
+[2025-06-24 18:03:24] API returned 1 results
+[2025-06-24 18:03:24] Geocoding successful: lat=44.6939852, lng=-63.6000984, display_name='560, Windmill Road, Burnside Industrial Park, Burnside, Dartmouth, Halifax Regional Municipality, Halifax County, Nova Scotia, B3B 1B3, Canada', type='yes'
+[2025-06-24 18:03:24] Successfully geocoded: 560 Windmill Road, Dartmouth, Nova Scotia, Canada
+[2025-06-24 18:03:24] Bulk geocoding: Successfully geocoded address for user 637 (suffix: )
+[2025-06-24 18:03:24] Debug: User 638 needs geocoding for suffix ''
+[2025-06-24 18:03:24] Debug: User 638 address: street='B210-5855 Spring Garden Road', city='Halifax', province='ns'
+[2025-06-24 18:03:24] Debug: Processing user 638 for geocoding...
+[2025-06-24 18:03:24] Trying geocode for: B210-5855 Spring Garden Road, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:24] Making API request to: https://nominatim.openstreetmap.org/search?q=B210-5855+Spring+Garden+Road%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:25] API Response: Code 200 - OK
+[2025-06-24 18:03:25] API returned 0 results
+[2025-06-24 18:03:25] No geocoding results found for address: B210-5855 Spring Garden Road, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:25] Trying geocode for: B210-5855 Spring Garden Road, Halifax, Nova Scotia
+[2025-06-24 18:03:25] Making API request to: https://nominatim.openstreetmap.org/search?q=B210-5855+Spring+Garden+Road%2C+Halifax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:26] API Response: Code 200 - OK
+[2025-06-24 18:03:26] API returned 0 results
+[2025-06-24 18:03:26] No geocoding results found for address: B210-5855 Spring Garden Road, Halifax, Nova Scotia
+[2025-06-24 18:03:26] Trying geocode for: Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:26] Making API request to: https://nominatim.openstreetmap.org/search?q=Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:27] API Response: Code 200 - OK
+[2025-06-24 18:03:27] API returned 1 results
+[2025-06-24 18:03:27] Geocoding successful: lat=44.648618, lng=-63.5859487, display_name='Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, Canada', type='administrative'
+[2025-06-24 18:03:27] Successfully geocoded: Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:27] Bulk geocoding: Successfully geocoded address for user 638 (suffix: )
+[2025-06-24 18:03:27] Debug: User 639 needs geocoding for suffix ''
+[2025-06-24 18:03:27] Debug: User 639 address: street='64 Dufferin St', city='Bridgewater', province='ns'
+[2025-06-24 18:03:27] Debug: Processing user 639 for geocoding...
+[2025-06-24 18:03:27] Trying geocode for: 64 Dufferin St, Bridgewater, Nova Scotia, Canada
+[2025-06-24 18:03:27] Making API request to: https://nominatim.openstreetmap.org/search?q=64+Dufferin+St%2C+Bridgewater%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:28] API Response: Code 200 - OK
+[2025-06-24 18:03:28] API returned 1 results
+[2025-06-24 18:03:28] Geocoding successful: lat=44.3741524, lng=-64.5189481, display_name='64, Dufferin Street, Town of Bridgewater, Lunenburg County, Nova Scotia, B4V 1P8, Canada', type='house'
+[2025-06-24 18:03:28] Successfully geocoded: 64 Dufferin St, Bridgewater, Nova Scotia, Canada
+[2025-06-24 18:03:28] Bulk geocoding: Successfully geocoded address for user 639 (suffix: )
+[2025-06-24 18:03:28] Debug: User 640 needs geocoding for suffix ''
+[2025-06-24 18:03:28] Debug: User 640 address: street='1894 Barrington st. Barrington tower lobby #154, Scotia Square mall', city='Halifax', province='ns'
+[2025-06-24 18:03:28] Debug: Processing user 640 for geocoding...
+[2025-06-24 18:03:28] Trying geocode for: 1894 Barrington st. Barrington tower lobby #154, Scotia Square mall, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:28] Making API request to: https://nominatim.openstreetmap.org/search?q=1894+Barrington+st.+Barrington+tower+lobby+%23154%2C+Scotia+Square+mall%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:30] API Response: Code 200 - OK
+[2025-06-24 18:03:30] API returned 0 results
+[2025-06-24 18:03:30] No geocoding results found for address: 1894 Barrington st. Barrington tower lobby #154, Scotia Square mall, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:30] Trying geocode for: 1894 Barrington st. Barrington tower lobby #154, Scotia Square mall, Halifax, Nova Scotia
+[2025-06-24 18:03:30] Making API request to: https://nominatim.openstreetmap.org/search?q=1894+Barrington+st.+Barrington+tower+lobby+%23154%2C+Scotia+Square+mall%2C+Halifax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:31] API Response: Code 200 - OK
+[2025-06-24 18:03:31] API returned 0 results
+[2025-06-24 18:03:31] No geocoding results found for address: 1894 Barrington st. Barrington tower lobby #154, Scotia Square mall, Halifax, Nova Scotia
+[2025-06-24 18:03:31] Trying geocode for: Barrington st. Barrington tower lobby #154, Scotia Square mall, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:31] Making API request to: https://nominatim.openstreetmap.org/search?q=Barrington+st.+Barrington+tower+lobby+%23154%2C+Scotia+Square+mall%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:33] API Response: Code 200 - OK
+[2025-06-24 18:03:33] API returned 0 results
+[2025-06-24 18:03:33] No geocoding results found for address: Barrington st. Barrington tower lobby #154, Scotia Square mall, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:33] Trying geocode for: Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:33] Making API request to: https://nominatim.openstreetmap.org/search?q=Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:34] API Response: Code 200 - OK
+[2025-06-24 18:03:34] API returned 1 results
+[2025-06-24 18:03:34] Geocoding successful: lat=44.648618, lng=-63.5859487, display_name='Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, Canada', type='administrative'
+[2025-06-24 18:03:34] Successfully geocoded: Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:34] Bulk geocoding: Successfully geocoded address for user 640 (suffix: )
+[2025-06-24 18:03:34] Debug: User 641 needs geocoding for suffix ''
+[2025-06-24 18:03:34] Debug: User 641 address: street='473 Upper River John Rd', city='Waughs River', province='ns'
+[2025-06-24 18:03:34] Debug: Processing user 641 for geocoding...
+[2025-06-24 18:03:34] Trying geocode for: 473 Upper River John Rd, Waughs River, Nova Scotia, Canada
+[2025-06-24 18:03:34] Making API request to: https://nominatim.openstreetmap.org/search?q=473+Upper+River+John+Rd%2C+Waughs+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:35] API Response: Code 200 - OK
+[2025-06-24 18:03:35] API returned 1 results
+[2025-06-24 18:03:35] Geocoding successful: lat=45.7012888, lng=-63.2269444, display_name='473, Upper River John Road, Waughs River, Municipality of Colchester, Colchester County, Nova Scotia, B0K 1V0, Canada', type='house'
+[2025-06-24 18:03:35] Successfully geocoded: 473 Upper River John Rd, Waughs River, Nova Scotia, Canada
+[2025-06-24 18:03:35] Bulk geocoding: Successfully geocoded address for user 641 (suffix: )
+[2025-06-24 18:03:35] Debug: User 642 needs geocoding for suffix ''
+[2025-06-24 18:03:35] Debug: User 642 address: street='3711 Joseph Howe Drive', city='Halifax', province='ns'
+[2025-06-24 18:03:35] Debug: Processing user 642 for geocoding...
+[2025-06-24 18:03:35] Trying geocode for: 3711 Joseph Howe Drive, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:35] Making API request to: https://nominatim.openstreetmap.org/search?q=3711+Joseph+Howe+Drive%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:36] API Response: Code 200 - OK
+[2025-06-24 18:03:36] API returned 1 results
+[2025-06-24 18:03:36] Geocoding successful: lat=44.6596511, lng=-63.6278386, display_name='3711, Joseph Howe Drive, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3L 4H8, Canada', type='yes'
+[2025-06-24 18:03:36] Successfully geocoded: 3711 Joseph Howe Drive, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:36] Bulk geocoding: Successfully geocoded address for user 642 (suffix: )
+[2025-06-24 18:03:36] Debug: User 643 needs geocoding for suffix ''
+[2025-06-24 18:03:36] Debug: User 643 address: street='58 Dorchester st', city='Sydney', province='ns'
+[2025-06-24 18:03:36] Debug: Processing user 643 for geocoding...
+[2025-06-24 18:03:36] Trying geocode for: 58 Dorchester st, Sydney, Nova Scotia, Canada
+[2025-06-24 18:03:36] Making API request to: https://nominatim.openstreetmap.org/search?q=58+Dorchester+st%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:37] API Response: Code 200 - OK
+[2025-06-24 18:03:37] API returned 1 results
+[2025-06-24 18:03:37] Geocoding successful: lat=46.1410269, lng=-60.1949925, display_name='58, Dorchester Street, Sydney, Cape Breton Regional Municipality, Cape Breton County, Nova Scotia, B1P 1C4, Canada', type='house'
+[2025-06-24 18:03:37] Successfully geocoded: 58 Dorchester st, Sydney, Nova Scotia, Canada
+[2025-06-24 18:03:38] Bulk geocoding: Successfully geocoded address for user 643 (suffix: )
+[2025-06-24 18:03:38] Debug: User 644 needs geocoding for suffix ''
+[2025-06-24 18:03:38] Debug: User 644 address: street='3301 Hwy 2, Suite 202', city='Fall River', province='ns'
+[2025-06-24 18:03:38] Debug: Processing user 644 for geocoding...
+[2025-06-24 18:03:38] Trying geocode for: 3301 Hwy 2, Suite 202, Fall River, Nova Scotia, Canada
+[2025-06-24 18:03:38] Making API request to: https://nominatim.openstreetmap.org/search?q=3301+Hwy+2%2C+Suite+202%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:39] API Response: Code 200 - OK
+[2025-06-24 18:03:39] API returned 0 results
+[2025-06-24 18:03:39] No geocoding results found for address: 3301 Hwy 2, Suite 202, Fall River, Nova Scotia, Canada
+[2025-06-24 18:03:39] Trying geocode for: 3301 Hwy 2, Suite 202, Fall River, Nova Scotia
+[2025-06-24 18:03:39] Making API request to: https://nominatim.openstreetmap.org/search?q=3301+Hwy+2%2C+Suite+202%2C+Fall+River%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:40] API Response: Code 200 - OK
+[2025-06-24 18:03:40] API returned 0 results
+[2025-06-24 18:03:40] No geocoding results found for address: 3301 Hwy 2, Suite 202, Fall River, Nova Scotia
+[2025-06-24 18:03:40] Trying geocode for: 3301 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-24 18:03:40] Making API request to: https://nominatim.openstreetmap.org/search?q=3301+Hwy+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:42] API Response: Code 200 - OK
+[2025-06-24 18:03:42] API returned 1 results
+[2025-06-24 18:03:42] Geocoding successful: lat=44.8181552, lng=-63.6126171, display_name='3301, Highway 2, Fall River Plaza, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1J2, Canada', type='dry_cleaning'
+[2025-06-24 18:03:42] Successfully geocoded: 3301 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-24 18:03:42] Bulk geocoding: Successfully geocoded address for user 644 (suffix: )
+[2025-06-24 18:03:42] Debug: User 645 needs geocoding for suffix ''
+[2025-06-24 18:03:42] Debug: User 645 address: street='54 Queen Street', city='Chester', province='ns'
+[2025-06-24 18:03:42] Debug: Processing user 645 for geocoding...
+[2025-06-24 18:03:42] Trying geocode for: 54 Queen Street, Chester, Nova Scotia, Canada
+[2025-06-24 18:03:42] Making API request to: https://nominatim.openstreetmap.org/search?q=54+Queen+Street%2C+Chester%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:44] API Response: Code 200 - OK
+[2025-06-24 18:03:44] API returned 1 results
+[2025-06-24 18:03:44] Geocoding successful: lat=44.5389337, lng=-64.2400757, display_name='54, Queen Street, Chester, Chester District Municipality, Lunenburg County, Nova Scotia, B0J 1J0, Canada', type='house'
+[2025-06-24 18:03:44] Successfully geocoded: 54 Queen Street, Chester, Nova Scotia, Canada
+[2025-06-24 18:03:44] Bulk geocoding: Successfully geocoded address for user 645 (suffix: )
+[2025-06-24 18:03:44] Debug: User 646 needs geocoding for suffix ''
+[2025-06-24 18:03:44] Debug: User 646 address: street='15 Dartmouth Rd. Suite 200', city='Bedford', province='ns'
+[2025-06-24 18:03:44] Debug: Processing user 646 for geocoding...
+[2025-06-24 18:03:44] Trying geocode for: 15 Dartmouth Road Suite 200, Bedford, Nova Scotia, Canada
+[2025-06-24 18:03:44] Making API request to: https://nominatim.openstreetmap.org/search?q=15+Dartmouth+Road+Suite+200%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:47] API Response: Code 200 - OK
+[2025-06-24 18:03:47] API returned 0 results
+[2025-06-24 18:03:47] No geocoding results found for address: 15 Dartmouth Road Suite 200, Bedford, Nova Scotia, Canada
+[2025-06-24 18:03:47] Trying geocode for: 15 Dartmouth Road Suite 200, Bedford, Nova Scotia
+[2025-06-24 18:03:47] Making API request to: https://nominatim.openstreetmap.org/search?q=15+Dartmouth+Road+Suite+200%2C+Bedford%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:49] API Response: Code 200 - OK
+[2025-06-24 18:03:49] API returned 0 results
+[2025-06-24 18:03:49] No geocoding results found for address: 15 Dartmouth Road Suite 200, Bedford, Nova Scotia
+[2025-06-24 18:03:49] Trying geocode for: 15 Dartmouth Road, Bedford, Nova Scotia, Canada
+[2025-06-24 18:03:49] Making API request to: https://nominatim.openstreetmap.org/search?q=15+Dartmouth+Road%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:50] API Response: Code 200 - OK
+[2025-06-24 18:03:50] API returned 1 results
+[2025-06-24 18:03:50] Geocoding successful: lat=44.729354, lng=-63.6556285, display_name='Wardour Centre, 15, Dartmouth Road, Bedford, Halifax Regional Municipality, Halifax County, Nova Scotia, B4A 3X6, Canada', type='yes'
+[2025-06-24 18:03:50] Successfully geocoded: 15 Dartmouth Road, Bedford, Nova Scotia, Canada
+[2025-06-24 18:03:50] Bulk geocoding: Successfully geocoded address for user 646 (suffix: )
+[2025-06-24 18:03:50] Debug: User 647 needs geocoding for suffix ''
+[2025-06-24 18:03:50] Debug: User 647 address: street='107 Young St', city='Truro', province='ns'
+[2025-06-24 18:03:50] Debug: Processing user 647 for geocoding...
+[2025-06-24 18:03:50] Trying geocode for: 107 Young St, Truro, Nova Scotia, Canada
+[2025-06-24 18:03:50] Making API request to: https://nominatim.openstreetmap.org/search?q=107+Young+St%2C+Truro%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:51] API Response: Code 200 - OK
+[2025-06-24 18:03:51] API returned 1 results
+[2025-06-24 18:03:51] Geocoding successful: lat=45.3607552, lng=-63.2782044, display_name='107, Young Street, Truro, Town of Truro, Colchester County, Nova Scotia, B2N 7H9, Canada', type='house'
+[2025-06-24 18:03:51] Successfully geocoded: 107 Young St, Truro, Nova Scotia, Canada
+[2025-06-24 18:03:51] Bulk geocoding: Successfully geocoded address for user 647 (suffix: )
+[2025-06-24 18:03:51] Debug: User 648 needs geocoding for suffix ''
+[2025-06-24 18:03:51] Debug: User 648 address: street='747 Park St', city='Kentville', province='ns'
+[2025-06-24 18:03:51] Debug: Processing user 648 for geocoding...
+[2025-06-24 18:03:51] Trying geocode for: 747 Park St, Kentville, Nova Scotia, Canada
+[2025-06-24 18:03:51] Making API request to: https://nominatim.openstreetmap.org/search?q=747+Park+St%2C+Kentville%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:52] API Response: Code 200 - OK
+[2025-06-24 18:03:52] API returned 1 results
+[2025-06-24 18:03:52] Geocoding successful: lat=45.0730562, lng=-64.5443245, display_name='747, Park Street, Kentville, Town of Kentville, Municipality of the County of Kings, Kings County, Nova Scotia, B4N 1M5, Canada', type='house'
+[2025-06-24 18:03:52] Successfully geocoded: 747 Park St, Kentville, Nova Scotia, Canada
+[2025-06-24 18:03:52] Bulk geocoding: Successfully geocoded address for user 648 (suffix: )
+[2025-06-24 18:03:52] Debug: User 649 needs geocoding for suffix ''
+[2025-06-24 18:03:52] Debug: User 649 address: street='1044 Two Islands Road', city='Parrsboro, NS', province='ns'
+[2025-06-24 18:03:52] Debug: Processing user 649 for geocoding...
+[2025-06-24 18:03:52] Trying geocode for: 1044 Two Islands Road, Parrsboro, NS, Nova Scotia, Canada
+[2025-06-24 18:03:52] Making API request to: https://nominatim.openstreetmap.org/search?q=1044+Two+Islands+Road%2C+Parrsboro%2C+NS%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:53] API Response: Code 200 - OK
+[2025-06-24 18:03:53] API returned 1 results
+[2025-06-24 18:03:53] Geocoding successful: lat=45.395239, lng=-64.3096535, display_name='Two Islands Road, Parrsboro, Municipality of the County of Cumberland, Cumberland County, Nova Scotia, B0M 1S0, Canada', type='tertiary'
+[2025-06-24 18:03:53] Successfully geocoded: 1044 Two Islands Road, Parrsboro, NS, Nova Scotia, Canada
+[2025-06-24 18:03:53] Bulk geocoding: Successfully geocoded address for user 649 (suffix: )
+[2025-06-24 18:03:53] Debug: User 650 needs geocoding for suffix ''
+[2025-06-24 18:03:53] Debug: User 650 address: street='3667 Strawberry Hill St. #220', city='Halifax', province='ns'
+[2025-06-24 18:03:53] Debug: Processing user 650 for geocoding...
+[2025-06-24 18:03:53] Trying geocode for: 3667 Strawberry Hill Street #220, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:53] Making API request to: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+Street+%23220%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:54] API Response: Code 200 - OK
+[2025-06-24 18:03:54] API returned 1 results
+[2025-06-24 18:03:54] Geocoding successful: lat=44.6619829, lng=-63.6194088, display_name='3667, Strawberry Hill Street, Convoy Place, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 5A8, Canada', type='commercial'
+[2025-06-24 18:03:54] Successfully geocoded: 3667 Strawberry Hill Street #220, Halifax, Nova Scotia, Canada
+[2025-06-24 18:03:54] Bulk geocoding: Successfully geocoded address for user 650 (suffix: )
+[2025-06-24 18:03:54] Debug: User 651 needs geocoding for suffix ''
+[2025-06-24 18:03:54] Debug: User 651 address: street='101-501 Timberlea Village Parkway', city='Timberlea', province='ns'
+[2025-06-24 18:03:54] Debug: Processing user 651 for geocoding...
+[2025-06-24 18:03:54] Trying geocode for: 101-501 Timberlea Village Parkway, Timberlea, Nova Scotia, Canada
+[2025-06-24 18:03:54] Making API request to: https://nominatim.openstreetmap.org/search?q=101-501+Timberlea+Village+Parkway%2C+Timberlea%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:55] API Response: Code 200 - OK
+[2025-06-24 18:03:55] API returned 1 results
+[2025-06-24 18:03:55] Geocoding successful: lat=44.6341001, lng=-63.7153423, display_name='Timberlea Village Parkway, Timberlea, Halifax Regional Municipality, Halifax County, Nova Scotia, B3T 0J5, Canada', type='secondary'
+[2025-06-24 18:03:55] Successfully geocoded: 101-501 Timberlea Village Parkway, Timberlea, Nova Scotia, Canada
+[2025-06-24 18:03:55] Bulk geocoding: Successfully geocoded address for user 651 (suffix: )
+[2025-06-24 18:03:55] Debug: User 652 needs geocoding for suffix ''
+[2025-06-24 18:03:55] Debug: User 652 address: street='Front Street', city='Wolfville', province='ns'
+[2025-06-24 18:03:55] Debug: Processing user 652 for geocoding...
+[2025-06-24 18:03:55] Trying geocode for: Front Street, Wolfville, Nova Scotia, Canada
+[2025-06-24 18:03:55] Making API request to: https://nominatim.openstreetmap.org/search?q=Front+Street%2C+Wolfville%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:56] API Response: Code 200 - OK
+[2025-06-24 18:03:56] API returned 1 results
+[2025-06-24 18:03:56] Geocoding successful: lat=45.0923044, lng=-64.3609253, display_name='Front Street, Downtown Wolfville, Wolfville, Town of Wolfville, Kings County, Nova Scotia, B4P 1C9, Canada', type='residential'
+[2025-06-24 18:03:56] Successfully geocoded: Front Street, Wolfville, Nova Scotia, Canada
+[2025-06-24 18:03:56] Bulk geocoding: Successfully geocoded address for user 652 (suffix: )
+[2025-06-24 18:03:56] Debug: User 653 needs geocoding for suffix ''
+[2025-06-24 18:03:56] Debug: User 653 address: street='4984 Main St', city='Oxford', province='ns'
+[2025-06-24 18:03:56] Debug: Processing user 653 for geocoding...
+[2025-06-24 18:03:56] Trying geocode for: 4984 Main St, Oxford, Nova Scotia, Canada
+[2025-06-24 18:03:56] Making API request to: https://nominatim.openstreetmap.org/search?q=4984+Main+St%2C+Oxford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:57] API Response: Code 200 - OK
+[2025-06-24 18:03:57] API returned 1 results
+[2025-06-24 18:03:57] Geocoding successful: lat=45.7320984, lng=-63.8723518, display_name='A.D. MacEachern, 4984, Main Street, Oxford, Town of Oxford, Cumberland County, Nova Scotia, B0M 1P0, Canada', type='insurance'
+[2025-06-24 18:03:57] Successfully geocoded: 4984 Main St, Oxford, Nova Scotia, Canada
+[2025-06-24 18:03:57] Bulk geocoding: Successfully geocoded address for user 653 (suffix: )
+[2025-06-24 18:03:57] Debug: User 654 needs geocoding for suffix ''
+[2025-06-24 18:03:57] Debug: User 654 address: street='101 Water Street, Lobby box 7', city='Yarmouth', province='ns'
+[2025-06-24 18:03:57] Debug: Processing user 654 for geocoding...
+[2025-06-24 18:03:57] Trying geocode for: 101 Water Street, Lobby box 7, Yarmouth, Nova Scotia, Canada
+[2025-06-24 18:03:57] Making API request to: https://nominatim.openstreetmap.org/search?q=101+Water+Street%2C+Lobby+box+7%2C+Yarmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:03:59] API Response: Code 200 - OK
+[2025-06-24 18:03:59] API returned 0 results
+[2025-06-24 18:03:59] No geocoding results found for address: 101 Water Street, Lobby box 7, Yarmouth, Nova Scotia, Canada
+[2025-06-24 18:03:59] Trying geocode for: 101 Water Street, Lobby box 7, Yarmouth, Nova Scotia
+[2025-06-24 18:03:59] Making API request to: https://nominatim.openstreetmap.org/search?q=101+Water+Street%2C+Lobby+box+7%2C+Yarmouth%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:00] API Response: Code 200 - OK
+[2025-06-24 18:04:00] API returned 0 results
+[2025-06-24 18:04:00] No geocoding results found for address: 101 Water Street, Lobby box 7, Yarmouth, Nova Scotia
+[2025-06-24 18:04:00] Trying geocode for: Water Street, Lobby box 7, Yarmouth, Nova Scotia, Canada
+[2025-06-24 18:04:00] Making API request to: https://nominatim.openstreetmap.org/search?q=Water+Street%2C+Lobby+box+7%2C+Yarmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:02] API Response: Code 200 - OK
+[2025-06-24 18:04:02] API returned 0 results
+[2025-06-24 18:04:02] No geocoding results found for address: Water Street, Lobby box 7, Yarmouth, Nova Scotia, Canada
+[2025-06-24 18:04:02] Trying geocode for: Yarmouth, Nova Scotia, Canada
+[2025-06-24 18:04:02] Making API request to: https://nominatim.openstreetmap.org/search?q=Yarmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:03] API Response: Code 200 - OK
+[2025-06-24 18:04:03] API returned 1 results
+[2025-06-24 18:04:03] Geocoding successful: lat=43.8372648, lng=-66.1157, display_name='Town of Yarmouth, Yarmouth County, Nova Scotia, Canada', type='administrative'
+[2025-06-24 18:04:03] Successfully geocoded: Yarmouth, Nova Scotia, Canada
+[2025-06-24 18:04:03] Bulk geocoding: Successfully geocoded address for user 654 (suffix: )
+[2025-06-24 18:04:03] Debug: User 655 needs geocoding for suffix ''
+[2025-06-24 18:04:03] Debug: User 655 address: street='950 Bedford Hwy, Suite 204', city='Bedford', province='ns'
+[2025-06-24 18:04:03] Debug: Processing user 655 for geocoding...
+[2025-06-24 18:04:03] Trying geocode for: 950 Bedford Hwy, Suite 204, Bedford, Nova Scotia, Canada
+[2025-06-24 18:04:03] Making API request to: https://nominatim.openstreetmap.org/search?q=950+Bedford+Hwy%2C+Suite+204%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:06] API Response: Code 200 - OK
+[2025-06-24 18:04:06] API returned 0 results
+[2025-06-24 18:04:06] No geocoding results found for address: 950 Bedford Hwy, Suite 204, Bedford, Nova Scotia, Canada
+[2025-06-24 18:04:06] Trying geocode for: 950 Bedford Hwy, Suite 204, Bedford, Nova Scotia
+[2025-06-24 18:04:06] Making API request to: https://nominatim.openstreetmap.org/search?q=950+Bedford+Hwy%2C+Suite+204%2C+Bedford%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:08] API Response: Code 200 - OK
+[2025-06-24 18:04:08] API returned 0 results
+[2025-06-24 18:04:08] No geocoding results found for address: 950 Bedford Hwy, Suite 204, Bedford, Nova Scotia
+[2025-06-24 18:04:08] Trying geocode for: 950 Bedford Hwy, Bedford, Nova Scotia, Canada
+[2025-06-24 18:04:08] Making API request to: https://nominatim.openstreetmap.org/search?q=950+Bedford+Hwy%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:09] API Response: Code 200 - OK
+[2025-06-24 18:04:09] API returned 1 results
+[2025-06-24 18:04:09] Geocoding successful: lat=44.7158642, lng=-63.6788796, display_name='950, Bedford Highway, Mill Cove, Bedford, Halifax Regional Municipality, Halifax County, Nova Scotia, B4A 4B5, Canada', type='yes'
+[2025-06-24 18:04:09] Successfully geocoded: 950 Bedford Hwy, Bedford, Nova Scotia, Canada
+[2025-06-24 18:04:09] Bulk geocoding: Successfully geocoded address for user 655 (suffix: )
+[2025-06-24 18:04:09] Debug: User 656 needs geocoding for suffix ''
+[2025-06-24 18:04:09] Debug: User 656 address: street='3290 Highway 2, Unit 2', city='Fall River', province='ns'
+[2025-06-24 18:04:09] Debug: Processing user 656 for geocoding...
+[2025-06-24 18:04:09] Trying geocode for: 3290 Highway 2, Unit 2, Fall River, Nova Scotia, Canada
+[2025-06-24 18:04:09] Making API request to: https://nominatim.openstreetmap.org/search?q=3290+Highway+2%2C+Unit+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:11] API Response: Code 200 - OK
+[2025-06-24 18:04:11] API returned 0 results
+[2025-06-24 18:04:11] No geocoding results found for address: 3290 Highway 2, Unit 2, Fall River, Nova Scotia, Canada
+[2025-06-24 18:04:11] Trying geocode for: 3290 Highway 2, Unit 2, Fall River, Nova Scotia
+[2025-06-24 18:04:11] Making API request to: https://nominatim.openstreetmap.org/search?q=3290+Highway+2%2C+Unit+2%2C+Fall+River%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:13] API Response: Code 200 - OK
+[2025-06-24 18:04:13] API returned 0 results
+[2025-06-24 18:04:13] No geocoding results found for address: 3290 Highway 2, Unit 2, Fall River, Nova Scotia
+[2025-06-24 18:04:13] Trying geocode for: 3290 Highway 2, Fall River, Nova Scotia, Canada
+[2025-06-24 18:04:13] Making API request to: https://nominatim.openstreetmap.org/search?q=3290+Highway+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-24 18:04:14] API Response: Code 200 - OK
+[2025-06-24 18:04:14] API returned 1 results
+[2025-06-24 18:04:14] Geocoding successful: lat=44.8179883, lng=-63.6101528, display_name='3290, Highway 2, Fall River Plaza, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1J5, Canada', type='retail'
+[2025-06-24 18:04:14] Successfully geocoded: 3290 Highway 2, Fall River, Nova Scotia, Canada
+[2025-06-24 18:04:17] Bulk geocoding: Successfully geocoded address for user 656 (suffix: )
+[2025-06-24 18:04:17] Debug: User 657 needs geocoding for suffix ''
+[2025-06-24 18:04:17] Debug: User 657 address: street='167 Hwy 214, Suite 101', city='Elmdsale', province='ns'
+[2025-06-24 18:04:17] Debug: Processing user 657 for geocoding...
+[2025-06-24 18:04:17] Trying geocode for: 167 Hwy 214, Suite 101, Elmdsale, Nova Scotia, Canada
+[2025-06-24 18:04:17] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Hwy+214%2C+Suite+101%2C+Elmdsale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
