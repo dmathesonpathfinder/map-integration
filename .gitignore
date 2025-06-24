@@ -1,0 +1,13 @@
+# Exclude log files
+geocodelogs.txt
+
+# Exclude common development files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.temp
+
+# WordPress specific
+wp-config.php
+.htaccess

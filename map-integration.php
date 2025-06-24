@@ -215,6 +215,9 @@ class MapGeocoder
 
         self::log_message("Making API request to: {$url}");
 
+        // Log the exact GET request URL
+        self::log_message("Geocoding GET request: {$url}");
+
         $response = wp_remote_get($url, array(
             'timeout' => 10,
             'headers' => array(
@@ -799,7 +802,7 @@ class MapIntegration
         return $stats;
     }
     /**
-     * Bulk geocode all users with addresses but no coordinates (with safety limits)
+     * Bulk geocoding all users with addresses but no coordinates (with safety limits)
      */
     /**
      * Get addresses that haven't been geocoded yet
