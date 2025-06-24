@@ -21,6 +21,11 @@ define('MAP_INTEGRATION_VERSION', '1.0.0');
 define('MAP_INTEGRATION_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MAP_INTEGRATION_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
+// Load new classes and functions
+require_once MAP_INTEGRATION_PLUGIN_PATH . 'includes/class-street-parser.php';
+require_once MAP_INTEGRATION_PLUGIN_PATH . 'includes/class-geocoding-service.php';
+require_once MAP_INTEGRATION_PLUGIN_PATH . 'includes/geocoding-functions.php';
+
 /**
  * Geocoding Class for handling Nominatim API requests
  */
@@ -372,7 +377,10 @@ class MapIntegration
      */
     public function activate()
     {
-        // Add any activation logic here
+        // Create geocoding cache table
+        $this->create_geocoding_cache_table();
+        
+        // Add any other activation logic here
         flush_rewrite_rules();
     }
 
@@ -397,12 +405,29 @@ class MapIntegration
             'map-integration',
             array($this, 'admin_page')
         );
+        
+        // Add geocoding tools submenu
+        add_submenu_page(
+            'options-general.php',
+            'Geocoding Tools',
+            'Geocoding Tools',
+            'manage_options',
+            'map-integration-geocoding',
+            array($this, 'geocoding_tools_page')
+        );
     }
     /**
      * Admin page content
      */
     public function admin_page()
     {
+        // Handle Google API key setting
+        if (isset($_POST['save_settings']) && wp_verify_nonce($_POST['_wpnonce'], 'save_settings_action')) {
+            $google_api_key = sanitize_text_field($_POST['google_api_key']);
+            update_option('map_integration_google_api_key', $google_api_key);
+            echo '<div class="notice notice-success"><p>Settings saved successfully.</p></div>';
+        }
+        
         // Handle bulk geocoding action
         if (isset($_POST['bulk_geocode']) && wp_verify_nonce($_POST['_wpnonce'], 'bulk_geocode_action')) {
             $this->bulk_geocode_users();
@@ -424,6 +449,24 @@ class MapIntegration
 ?>
         <div class="wrap">
             <h1>Map Integration Settings</h1>
+
+            <h2>Geocoding Settings</h2>
+            <form method="post">
+                <?php wp_nonce_field('save_settings_action'); ?>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">Google Maps API Key</th>
+                        <td>
+                            <input type="text" name="google_api_key" class="regular-text" 
+                                   value="<?php echo esc_attr(get_option('map_integration_google_api_key', '')); ?>" />
+                            <p class="description">Optional: Enter your Google Maps API key to enable Google geocoding as a fallback provider.</p>
+                        </td>
+                    </tr>
+                </table>
+                <p class="submit">
+                    <input type="submit" name="save_settings" class="button-primary" value="Save Settings" />
+                </p>
+            </form>
 
             <h2>Geocoding Statistics</h2>
             <table class="widefat">
@@ -1002,6 +1045,47 @@ class MapIntegration
         MapGeocoder::log_message("Bulk geocoding completed: {$total_processed} processed, {$total_success} successful, {$time_taken}s");
 
         echo '<div class="notice notice-success"><p>' . $message . '</p></div>';
+    }
+
+    /**
+     * Create geocoding cache database table
+     */
+    private function create_geocoding_cache_table()
+    {
+        global $wpdb;
+        
+        $table_name = $wpdb->prefix . 'geocoded_addresses';
+        
+        $charset_collate = $wpdb->get_charset_collate();
+        
+        $sql = "CREATE TABLE $table_name (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            original_address text NOT NULL,
+            parsed_address text,
+            latitude decimal(10,6),
+            longitude decimal(10,6),
+            provider varchar(50),
+            confidence_score int(3),
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY original_address_idx (original_address(100)),
+            KEY provider_idx (provider),
+            KEY created_at_idx (created_at)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+        
+        MapGeocoder::log_message("Geocoding cache table created/updated: $table_name");
+    }
+
+    /**
+     * Geocoding tools admin page
+     */
+    public function geocoding_tools_page()
+    {
+        // Include the geocoding test partial
+        include MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
     }
 }
 
