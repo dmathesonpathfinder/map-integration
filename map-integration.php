@@ -772,7 +772,6 @@ class MapIntegration
                 <li><code>[chiropractor_directory show_search="false"]</code> - Directory without search</li>
                 <li><code>[chiropractor_directory include_map="true"]</code> - Directory with integrated map</li>
                 <li><code>[chiropractor_directory show_map_links="false"]</code> - Directory without map links</li>
-                <li><code>[chiropractor_directory show_avatar="false"]</code> - Directory without user avatars</li>
                 <li><code>[chiropractor_directory show_contact="false"]</code> - Directory without contact info</li>
                 <li><code>[chiropractor_directory sort_by="location_count" sort_order="desc"]</code> - Sort by number of locations</li>
                 <li><code>[chiropractor_directory user_role="subscriber"]</code> - Filter by user role</li>
@@ -1845,7 +1844,7 @@ class MapIntegration
             'center_lat' => '44.6488',
             'center_lng' => '-63.5752',
             'zoom' => '7',
-            'show_avatar' => 'true',
+            'show_avatar' => 'false',
             'show_contact' => 'true',
             'sort_by' => 'name', // name, location_count, date_registered
             'sort_order' => 'asc' // asc, desc
@@ -1923,7 +1922,6 @@ class MapIntegration
                 'user_email' => $user->user_email,
                 'date_registered' => $user->user_registered,
                 'locations' => array(),
-                'avatar_url' => get_avatar_url($user->ID, array('size' => 96)),
                 'bio' => get_user_meta($user->ID, 'description', true),
                 'website' => $user->user_url
             );
@@ -2067,20 +2065,31 @@ class MapIntegration
     {
         $output = '<div class="chiro-listing" data-user-id="' . esc_attr($chiropractor['user_id']) . '">';
         
-        // Header with avatar and basic info
+        // Header with basic info
         $output .= '<div class="chiro-header">';
-        
-        // Avatar
-        if ($atts['show_avatar'] === 'true' && $chiropractor['avatar_url']) {
-            $output .= '<div class="chiro-avatar">';
-            $output .= '<img src="' . esc_url($chiropractor['avatar_url']) . '" alt="' . esc_attr($chiropractor['display_name']) . '" />';
-            $output .= '</div>';
-        }
         
         // Basic info
         $output .= '<div class="chiro-info">';
         $output .= '<h3 class="chiro-name">';
-        $output .= '<a href="#" onclick="return false;">' . esc_html($chiropractor['display_name']) . '</a>';
+        
+        // Make chiropractor name clickable to center on first location with coordinates
+        $first_location_with_coords = null;
+        foreach ($chiropractor['locations'] as $location) {
+            if ($location['has_coordinates']) {
+                $first_location_with_coords = $location;
+                break;
+            }
+        }
+        
+        if ($first_location_with_coords && $atts['show_map_links'] === 'true') {
+            // Generate the clinic name exactly as it appears on the map
+            $user = get_user_by('ID', $chiropractor['user_id']);
+            $map_clinic_name = $first_location_with_coords['name'] ?: ($user->display_name . ' (' . $first_location_with_coords['label'] . ')');
+            $output .= '<a href="#" class="map-clickable" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">' . esc_html($chiropractor['display_name']) . '</a>';
+        } else {
+            $output .= esc_html($chiropractor['display_name']);
+        }
+        
         $output .= '</h3>';
         
         if (!empty($chiropractor['bio'])) {
@@ -2099,7 +2108,7 @@ class MapIntegration
             $output .= '</div>';
 
             foreach ($chiropractor['locations'] as $location) {
-                $output .= $this->render_location_item($location, $chiropractor['display_name'], $atts);
+                $output .= $this->render_location_item($location, $chiropractor['display_name'], $atts, $chiropractor['user_id']);
             }
 
             $output .= '</div>'; // Close chiro-locations
@@ -2113,7 +2122,7 @@ class MapIntegration
     /**
      * Render a single location item
      */
-    private function render_location_item($location, $chiropractor_name, $atts)
+    private function render_location_item($location, $chiropractor_name, $atts, $user_id)
     {
         $output = '<div class="location-item">';
         
@@ -2125,9 +2134,10 @@ class MapIntegration
         $output .= '<div class="location-name">';
         
         if ($atts['show_map_links'] === 'true' && $location['has_coordinates']) {
-            // Create a unique clinic name for the map centering function
-            $map_clinic_name = $chiropractor_name . ' (' . $location['label'] . ')';
-            $output .= '<a href="#" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">';
+            // Generate the clinic name exactly as it appears on the map  
+            $user = get_user_by('ID', $user_id);
+            $map_clinic_name = $location['name'] ?: ($user->display_name . ' (' . $location['label'] . ')');
+            $output .= '<a href="#" class="map-clickable" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">';
             $output .= esc_html($location_display_name);
             $output .= '</a>';
         } else {
@@ -2168,8 +2178,10 @@ class MapIntegration
 
         // Map link button for locations with coordinates
         if ($atts['show_map_links'] === 'true' && $location['has_coordinates']) {
-            $map_clinic_name = $chiropractor_name . ' (' . $location['label'] . ')';
-            $output .= '<a href="#" class="view-on-map-btn" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">View on Map</a>';
+            // Generate the clinic name exactly as it appears on the map
+            $user = get_user_by('ID', $user_id);
+            $map_clinic_name = $location['name'] ?: ($user->display_name . ' (' . $location['label'] . ')');
+            $output .= '<a href="#" class="view-on-map-btn map-clickable" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">View on Map</a>';
         }
 
         $output .= '</div>'; // Close location-item

@@ -27,7 +27,6 @@ The Map Integration plugin now includes a comprehensive chiropractor directory f
 - Customizable with CSS
 
 ### 👤 **User Profiles**
-- Display chiropractor avatars
 - Multiple clinic locations per chiropractor
 - Contact information (phone, email, website)
 - Bio/description excerpts
@@ -53,11 +52,6 @@ The Map Integration plugin now includes a comprehensive chiropractor directory f
 ### Directory without Map Links
 ```
 [chiropractor_directory show_map_links="false"]
-```
-
-### Directory without Avatars
-```
-[chiropractor_directory show_avatar="false"]
 ```
 
 ### Directory without Contact Info
@@ -88,7 +82,6 @@ The Map Integration plugin now includes a comprehensive chiropractor directory f
 | `center_lat` | `44.6488` | Latitude | Default map center latitude |
 | `center_lng` | `-63.5752` | Longitude | Default map center longitude |
 | `zoom` | `7` | 1-18 | Default map zoom level |
-| `show_avatar` | `true` | `true`, `false` | Display user avatars |
 | `show_contact` | `true` | `true`, `false` | Display contact information |
 | `sort_by` | `name` | `name`, `location_count`, `date_registered` | Sort criteria |
 | `sort_order` | `asc` | `asc`, `desc` | Sort direction |

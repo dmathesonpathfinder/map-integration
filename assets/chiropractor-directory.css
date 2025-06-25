@@ -103,29 +103,11 @@
 
 /* Chiropractor header */
 .chiro-header {
-    display: flex;
-    align-items: flex-start;
     margin-bottom: 15px;
-    gap: 20px;
-}
-
-.chiro-avatar {
-    flex-shrink: 0;
-    width: 96px;
-    height: 96px;
-}
-
-.chiro-avatar img {
-    width: 96px;
-    height: 96px;
-    border-radius: 6px;
-    object-fit: cover;
-    border: 2px solid #e1e1e1;
 }
 
 .chiro-info {
-    flex: 1;
-    min-width: 0;
+    width: 100%;
 }
 
 .chiro-name {
@@ -139,6 +121,30 @@
     color: inherit;
     text-decoration: none;
     transition: color 0.3s ease;
+}
+
+/* Clickable chiropractor names for map centering */
+.chiro-name a.map-clickable {
+    cursor: pointer;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.chiro-name a.map-clickable:hover {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.chiro-name a.map-clickable:after {
+    content: "📍";
+    font-size: 14px;
+    margin-left: 8px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.chiro-name a.map-clickable:hover:after {
+    opacity: 1;
 }
 
 .chiro-name a:hover {
@@ -189,6 +195,29 @@
     text-decoration: none;
     cursor: pointer;
     transition: color 0.3s ease;
+}
+
+/* Make location names clearly clickable */
+.location-name a.map-clickable {
+    cursor: pointer;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.location-name a.map-clickable:hover {
+    color: #3498db;
+}
+
+.location-name a.map-clickable:after {
+    content: "🗺️";
+    font-size: 12px;
+    margin-left: 6px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.location-name a.map-clickable:hover:after {
+    opacity: 1;
 }
 
 .location-name a:hover {
@@ -275,15 +304,6 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-    .chiro-header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .chiro-avatar {
-        align-self: center;
-    }
-    
     .location-contact {
         flex-direction: column;
         gap: 8px;
@@ -341,6 +361,12 @@
     background: #2ecc71;
     color: white;
     text-decoration: none;
+}
+
+.view-on-map-btn.map-clickable:hover {
+    background: #2ecc71;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .view-on-map-btn:before {
