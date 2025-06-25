@@ -370,6 +370,14 @@ class MapIntegration
 
         // Hook into user meta updates to trigger geocoding
         add_action('updated_user_meta', array($this, 'handle_user_meta_update'), 10, 4);
+        
+        // Add AJAX handlers for bulk geocoding control
+        add_action('wp_ajax_start_bulk_geocoding', array($this, 'ajax_start_bulk_geocoding'));
+        add_action('wp_ajax_stop_bulk_geocoding', array($this, 'ajax_stop_bulk_geocoding'));
+        add_action('wp_ajax_get_bulk_geocoding_status', array($this, 'ajax_get_bulk_geocoding_status'));
+        
+        // Add scheduled event handler for background processing
+        add_action('process_geocoding_batch', array($this, 'process_geocoding_batch'));
     }
 
     /**
@@ -427,6 +435,14 @@ class MapIntegration
             update_option('map_integration_google_api_key', $google_api_key);
             echo '<div class="notice notice-success"><p>Settings saved successfully.</p></div>';
         }
+        
+        // Enqueue admin scripts for AJAX functionality
+        wp_enqueue_script('jquery');
+        wp_localize_script('jquery', 'mapIntegrationAjax', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('bulk_geocoding_control')
+        ));
+        
         
         // Handle bulk geocoding action
         if (isset($_POST['bulk_geocode']) && wp_verify_nonce($_POST['_wpnonce'], 'bulk_geocode_action')) {
@@ -528,13 +544,120 @@ class MapIntegration
                 <p>All addresses have been geocoded.</p>
             <?php endif; ?>
 
-            <h2>Bulk Geocoding</h2>
-            <p>Geocode all existing clinic addresses that don't have coordinates yet.</p>
+            <h2>Interactive Bulk Geocoding</h2>
+            <p>Geocode all existing clinic addresses that don't have coordinates yet. This process can be started, stopped, and monitored in real-time.</p>
+            
+            <div id="bulk-geocoding-controls">
+                <button id="start-geocoding" class="button button-primary">Start Bulk Geocoding</button>
+                <button id="stop-geocoding" class="button" disabled>Stop Geocoding</button>
+                <button id="refresh-status" class="button">Refresh Status</button>
+            </div>
+            
+            <div id="geocoding-status" style="margin-top: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
+                <h4>Status: <span id="status-indicator">Not running</span></h4>
+                <div id="progress-info">
+                    <p><strong>Processed:</strong> <span id="processed-count">0</span></p>
+                    <p><strong>Successful:</strong> <span id="success-count">0</span></p>
+                    <p><strong>Failed:</strong> <span id="failed-count">0</span></p>
+                    <p><strong>Current:</strong> <span id="progress-message">Ready to start</span></p>
+                </div>
+            </div>
+            
+            <script>
+            jQuery(document).ready(function($) {
+                var geocodingNonce = '<?php echo wp_create_nonce('bulk_geocoding_control'); ?>';
+                var statusCheckInterval;
+                
+                // Start geocoding
+                $('#start-geocoding').click(function() {
+                    $.post(ajaxurl, {
+                        action: 'start_bulk_geocoding',
+                        nonce: geocodingNonce
+                    }, function(response) {
+                        if (response.success) {
+                            $('#start-geocoding').prop('disabled', true);
+                            $('#stop-geocoding').prop('disabled', false);
+                            $('#status-indicator').text('Starting...');
+                            startStatusUpdates();
+                        } else {
+                            alert('Error: ' + response.data);
+                        }
+                    });
+                });
+                
+                // Stop geocoding
+                $('#stop-geocoding').click(function() {
+                    $.post(ajaxurl, {
+                        action: 'stop_bulk_geocoding',
+                        nonce: geocodingNonce
+                    }, function(response) {
+                        if (response.success) {
+                            $('#start-geocoding').prop('disabled', false);
+                            $('#stop-geocoding').prop('disabled', true);
+                            stopStatusUpdates();
+                        } else {
+                            alert('Error: ' + response.data);
+                        }
+                    });
+                });
+                
+                // Refresh status
+                $('#refresh-status').click(function() {
+                    updateStatus();
+                });
+                
+                // Update status function
+                function updateStatus() {
+                    $.post(ajaxurl, {
+                        action: 'get_bulk_geocoding_status',
+                        nonce: geocodingNonce
+                    }, function(response) {
+                        if (response.success) {
+                            var status = response.data;
+                            $('#status-indicator').text(status.running ? 'Running' : 'Not running');
+                            $('#processed-count').text(status.total_processed || 0);
+                            $('#success-count').text(status.total_success || 0);
+                            $('#failed-count').text(status.total_failed || 0);
+                            $('#progress-message').text(status.progress_message || 'Ready');
+                            
+                            // Update button states
+                            $('#start-geocoding').prop('disabled', status.running);
+                            $('#stop-geocoding').prop('disabled', !status.running);
+                            
+                            // Auto-stop status updates if not running
+                            if (!status.running && statusCheckInterval) {
+                                stopStatusUpdates();
+                            }
+                        }
+                    });
+                }
+                
+                // Start status updates
+                function startStatusUpdates() {
+                    updateStatus();
+                    statusCheckInterval = setInterval(updateStatus, 3000); // Update every 3 seconds
+                }
+                
+                // Stop status updates
+                function stopStatusUpdates() {
+                    if (statusCheckInterval) {
+                        clearInterval(statusCheckInterval);
+                        statusCheckInterval = null;
+                    }
+                }
+                
+                // Initial status check
+                updateStatus();
+            });
+            </script>
+            
+            <h3>Legacy Bulk Geocoding</h3>
+            <p><em>For one-time batch processing (old method):</em></p>
             <form method="post" action="">
                 <?php wp_nonce_field('bulk_geocode_action'); ?>
-                <input type="submit" name="bulk_geocode" class="button button-primary" value="Run Bulk Geocoding"
-                    onclick="return confirm('This may take a while. Continue?');">
-                <p><em>Note: This respects Nominatim's rate limits (1 request per second).</em></p>
+                <input type="submit" name="bulk_geocode" class="button button-secondary" value="Run Legacy Bulk Geocoding"
+                    onclick="return confirm('This may take a while and cannot be interrupted. Use the Interactive Bulk Geocoding above instead. Continue?');">
+                <p><em>Note: This is the old method that respects batch limits and cannot be interrupted.</em></p>
             </form>
 
             <h2>Clear Geocoding Data</h2>
@@ -1077,6 +1200,325 @@ class MapIntegration
         dbDelta($sql);
         
         MapGeocoder::log_message("Geocoding cache table created/updated: $table_name");
+    }
+
+    /**
+     * AJAX handler to start bulk geocoding
+     */
+    public function ajax_start_bulk_geocoding()
+    {
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Check if already running
+        $status = get_transient('bulk_geocoding_status');
+        if ($status && $status['running']) {
+            wp_send_json_error('Bulk geocoding is already running');
+        }
+        
+        // Start the process
+        $this->start_background_geocoding();
+        
+        wp_send_json_success('Bulk geocoding started');
+    }
+    
+    /**
+     * AJAX handler to stop bulk geocoding
+     */
+    public function ajax_stop_bulk_geocoding()
+    {
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Stop the process
+        $this->stop_background_geocoding();
+        
+        wp_send_json_success('Bulk geocoding stopped');
+    }
+    
+    /**
+     * AJAX handler to get bulk geocoding status
+     */
+    public function ajax_get_bulk_geocoding_status()
+    {
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Get current status
+        $status = $this->get_bulk_geocoding_status();
+        
+        wp_send_json_success($status);
+    }
+    
+    /**
+     * Start background geocoding process
+     */
+    private function start_background_geocoding()
+    {
+        // Initialize status
+        $status = array(
+            'running' => true,
+            'started_at' => time(),
+            'total_processed' => 0,
+            'total_success' => 0,
+            'total_failed' => 0,
+            'current_user_id' => 0,
+            'progress_message' => 'Starting bulk geocoding...'
+        );
+        
+        set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+        
+        // Schedule the first batch
+        wp_schedule_single_event(time(), 'process_geocoding_batch');
+        
+        MapGeocoder::log_message("Background bulk geocoding started");
+    }
+    
+    /**
+     * Stop background geocoding process
+     */
+    private function stop_background_geocoding()
+    {
+        // Update status to stopped
+        $status = get_transient('bulk_geocoding_status');
+        if ($status) {
+            $status['running'] = false;
+            $status['stopped_at'] = time();
+            $status['progress_message'] = 'Geocoding stopped by user';
+            set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+        }
+        
+        // Clear any scheduled events
+        wp_clear_scheduled_hook('process_geocoding_batch');
+        
+        MapGeocoder::log_message("Background bulk geocoding stopped by user");
+    }
+    
+    /**
+     * Process a batch of geocoding in the background
+     */
+    public function process_geocoding_batch()
+    {
+        // Check if we should continue
+        $status = get_transient('bulk_geocoding_status');
+        if (!$status || !$status['running']) {
+            MapGeocoder::log_message("Background geocoding process stopped");
+            return;
+        }
+        
+        MapGeocoder::log_message("Processing geocoding batch...");
+        
+        // Get users that need geocoding
+        $users_to_process = $this->get_users_needing_geocoding(10); // Process 10 at a time
+        
+        if (empty($users_to_process)) {
+            // No more users to process, complete the job
+            $status['running'] = false;
+            $status['completed_at'] = time();
+            $status['progress_message'] = 'Bulk geocoding completed successfully';
+            set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+            
+            MapGeocoder::log_message("Background bulk geocoding completed: {$status['total_processed']} processed, {$status['total_success']} successful");
+            return;
+        }
+        
+        // Process each user
+        foreach ($users_to_process as $user_info) {
+            // Check if we should stop
+            $current_status = get_transient('bulk_geocoding_status');
+            if (!$current_status || !$current_status['running']) {
+                break;
+            }
+            
+            $user_id = $user_info['user_id'];
+            $suffix = $user_info['suffix'];
+            $fields = $user_info['fields'];
+            
+            $status['current_user_id'] = $user_id;
+            $status['progress_message'] = "Processing user {$user_id} (suffix: {$suffix})";
+            set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+            
+            $street = get_user_meta($user_id, $fields['street'], true);
+            $city = get_user_meta($user_id, $fields['city'], true);
+            $province = get_user_meta($user_id, $fields['province'], true);
+            
+            MapGeocoder::log_message("Background processing user {$user_id}: street='{$street}', city='{$city}', province='{$province}'");
+            
+            // Only geocode if we have street or city data
+            if (!empty($street) || !empty($city)) {
+                $coordinates = $this->geocode_address_with_improved_fallback($street, $city, $province);
+                
+                if ($coordinates) {
+                    MapGeocoder::save_coordinates($user_id, $coordinates, $suffix);
+                    $status['total_success']++;
+                    MapGeocoder::log_message("Background geocoding: Successfully geocoded address for user {$user_id} (suffix: {$suffix})");
+                } else {
+                    $status['total_failed']++;
+                    MapGeocoder::log_message("Background geocoding: Failed to geocode address for user {$user_id} (suffix: {$suffix})");
+                }
+            } else {
+                MapGeocoder::log_message("Background geocoding: User {$user_id} has province-only address, skipping");
+            }
+            
+            $status['total_processed']++;
+            set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+            
+            // Small delay to respect rate limits
+            sleep(1);
+        }
+        
+        // Schedule next batch if still running
+        $final_status = get_transient('bulk_geocoding_status');
+        if ($final_status && $final_status['running']) {
+            wp_schedule_single_event(time() + 2, 'process_geocoding_batch');
+        }
+    }
+    
+    /**
+     * Get users that need geocoding with improved fallback handling
+     */
+    private function get_users_needing_geocoding($limit = 10)
+    {
+        global $wpdb;
+        
+        $address_sets = array(
+            '' => array('street' => 'mepr_clinic_street', 'city' => 'mepr_clinic_city', 'province' => 'mepr_clinic_province'),
+            '_2' => array('street' => 'mepr_clinic_street_2', 'city' => 'mepr_clinic_city_2', 'province' => 'mepr_clinic_province_2'),
+            '_3' => array('street' => 'mepr_clinic_street_3', 'city' => 'mepr_clinic_city_3', 'province' => 'mepr_clinic_province_3')
+        );
+        
+        $users_needing_geocoding = array();
+        
+        foreach ($address_sets as $suffix => $fields) {
+            if (count($users_needing_geocoding) >= $limit) {
+                break;
+            }
+            
+            // Get users with addresses but no coordinates
+            $users_with_addresses = $wpdb->get_results($wpdb->prepare("
+                SELECT DISTINCT user_id 
+                FROM {$wpdb->usermeta} 
+                WHERE meta_key = %s 
+                AND meta_value != '' 
+                LIMIT %d
+            ", $fields['street'], $limit));
+            
+            foreach ($users_with_addresses as $user_row) {
+                if (count($users_needing_geocoding) >= $limit) {
+                    break;
+                }
+                
+                $user_id = $user_row->user_id;
+                $existing_lat = get_user_meta($user_id, 'mepr_clinic_lat' . $suffix, true);
+                
+                // Check if coordinates are missing or invalid
+                if (empty($existing_lat) || floatval($existing_lat) == 0 || MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id)) {
+                    $users_needing_geocoding[] = array(
+                        'user_id' => $user_id,
+                        'suffix' => $suffix,
+                        'fields' => $fields
+                    );
+                }
+            }
+        }
+        
+        return $users_needing_geocoding;
+    }
+    
+    /**
+     * Geocode address with improved fallback handling for better results
+     */
+    private function geocode_address_with_improved_fallback($street, $city, $province)
+    {
+        // First try the original method
+        $result = MapGeocoder::geocode_address($street, $city, $province);
+        
+        if ($result) {
+            return $result;
+        }
+        
+        // Enhanced fallback strategies for better address handling
+        MapGeocoder::log_message("Trying enhanced fallback strategies for: street='{$street}', city='{$city}', province='{$province}'");
+        
+        // Strategy 1: Try city + province only if we have a city
+        if (!empty($city) && !empty($province)) {
+            $fallback_result = MapGeocoder::geocode_address('', $city, $province);
+            if ($fallback_result && $fallback_result['latitude'] != 0) {
+                // Mark as lower confidence since it's city-level
+                $fallback_result['confidence_score'] = max(30, ($fallback_result['confidence_score'] ?? 0) - 30);
+                $fallback_result['fallback_used'] = 'city_only';
+                MapGeocoder::log_message("Fallback successful using city-only: {$city}, {$province}");
+                return $fallback_result;
+            }
+        }
+        
+        // Strategy 2: Try just the city if no province match
+        if (!empty($city)) {
+            $fallback_result = MapGeocoder::geocode_address('', $city, '');
+            if ($fallback_result && $fallback_result['latitude'] != 0) {
+                // Mark as lower confidence
+                $fallback_result['confidence_score'] = max(20, ($fallback_result['confidence_score'] ?? 0) - 40);
+                $fallback_result['fallback_used'] = 'city_no_province';
+                MapGeocoder::log_message("Fallback successful using city without province: {$city}");
+                return $fallback_result;
+            }
+        }
+        
+        // Strategy 3: Try province only as last resort (but mark as very low confidence)
+        if (!empty($province)) {
+            $fallback_result = MapGeocoder::geocode_address('', '', $province);
+            if ($fallback_result && $fallback_result['latitude'] != 0) {
+                // Mark as very low confidence since it's province-level
+                $fallback_result['confidence_score'] = 10;
+                $fallback_result['fallback_used'] = 'province_only';
+                MapGeocoder::log_message("Fallback successful using province-only: {$province} (low confidence)");
+                return $fallback_result;
+            }
+        }
+        
+        MapGeocoder::log_message("All enhanced fallback strategies failed");
+        return false;
+    }
+
+    /**
+     * Get current bulk geocoding status
+     */
+    private function get_bulk_geocoding_status()
+    {
+        $status = get_transient('bulk_geocoding_status');
+        
+        if (!$status) {
+            return array(
+                'running' => false,
+                'total_processed' => 0,
+                'total_success' => 0,
+                'total_failed' => 0,
+                'progress_message' => 'Not running'
+            );
+        }
+        
+        return $status;
     }
 
     /**
