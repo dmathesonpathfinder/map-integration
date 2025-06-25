@@ -405,6 +405,9 @@ class MapIntegration
     {
         // Add shortcode for displaying maps
         add_shortcode('map_integration', array($this, 'display_map_shortcode'));
+        
+        // Add shortcode for chiropractor directory
+        add_shortcode('chiropractor_directory', array($this, 'display_chiropractor_directory'));
 
         // Add admin menu
         add_action('admin_menu', array($this, 'add_admin_menu'));
@@ -762,6 +765,19 @@ class MapIntegration
                 <li><code>[map_integration show_clinics="false" location="Custom Location"]</code> - Legacy placeholder map</li>
             </ul>
 
+            <h3>Chiropractor Directory Shortcodes</h3>
+            <p>Use these shortcodes to display searchable chiropractor directories:</p>
+            <ul>
+                <li><code>[chiropractor_directory]</code> - Display searchable chiropractor directory</li>
+                <li><code>[chiropractor_directory show_search="false"]</code> - Directory without search</li>
+                <li><code>[chiropractor_directory include_map="true"]</code> - Directory with integrated map</li>
+                <li><code>[chiropractor_directory show_map_links="false"]</code> - Directory without map links</li>
+                <li><code>[chiropractor_directory show_avatar="false"]</code> - Directory without user avatars</li>
+                <li><code>[chiropractor_directory show_contact="false"]</code> - Directory without contact info</li>
+                <li><code>[chiropractor_directory sort_by="location_count" sort_order="desc"]</code> - Sort by number of locations</li>
+                <li><code>[chiropractor_directory user_role="subscriber"]</code> - Filter by user role</li>
+            </ul>
+
             <h3>Data Storage</h3>
             <p>Coordinates are stored in user meta fields:</p>
             <ul>
@@ -783,6 +799,31 @@ class MapIntegration
             MAP_INTEGRATION_PLUGIN_URL . 'assets/style.css',
             array(),
             MAP_INTEGRATION_VERSION
+        );
+
+        // Enqueue chiropractor directory styles
+        wp_enqueue_style(
+            'chiropractor-directory-style',
+            MAP_INTEGRATION_PLUGIN_URL . 'assets/chiropractor-directory.css',
+            array(),
+            MAP_INTEGRATION_VERSION
+        );
+
+        // Enqueue chiropractor directory script
+        wp_enqueue_script(
+            'chiropractor-directory-script',
+            MAP_INTEGRATION_PLUGIN_URL . 'assets/chiropractor-directory.js',
+            array('jquery'),
+            MAP_INTEGRATION_VERSION,
+            true
+        );
+
+        // Enqueue Font Awesome for search icons
+        wp_enqueue_style(
+            'font-awesome',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+            array(),
+            '6.0.0'
         );
 
         // Enqueue Leaflet CSS first to prevent white grid lines
@@ -1099,6 +1140,8 @@ class MapIntegration
         
         return $output;
     }
+    
+    /**
      * Handle user meta updates and trigger geocoding for clinic addresses
      */
     public function handle_user_meta_update($meta_id, $user_id, $meta_key, $meta_value)
@@ -1785,6 +1828,353 @@ class MapIntegration
     {
         // Include the geocoding test partial
         include MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
+    }
+
+    /**
+     * Display chiropractor directory shortcode with search functionality
+     */
+    public function display_chiropractor_directory($atts)
+    {
+        $atts = shortcode_atts(array(
+            'user_role' => 'subscriber',
+            'show_search' => 'true',
+            'show_map_links' => 'true',
+            'include_map' => 'false',
+            'map_width' => '100%',
+            'map_height' => '400px',
+            'center_lat' => '44.6488',
+            'center_lng' => '-63.5752',
+            'zoom' => '7',
+            'show_avatar' => 'true',
+            'show_contact' => 'true',
+            'sort_by' => 'name', // name, location_count, date_registered
+            'sort_order' => 'asc' // asc, desc
+        ), $atts);
+
+        // Get all chiropractor data
+        $chiropractors = $this->get_chiropractor_directory_data($atts['user_role']);
+        
+        if (empty($chiropractors)) {
+            return '<div class="chiro-directory-container"><p>No chiropractors found.</p></div>';
+        }
+
+        // Sort chiropractors
+        $chiropractors = $this->sort_chiropractors($chiropractors, $atts['sort_by'], $atts['sort_order']);
+
+        // Generate unique ID for this directory instance
+        $directory_id = 'chiro-directory-' . uniqid();
+
+        // Start building output
+        $output = '<div class="chiro-directory-container" id="' . esc_attr($directory_id) . '">';
+
+        // Add search if enabled
+        if ($atts['show_search'] === 'true') {
+            $output .= $this->render_directory_search();
+        }
+
+        // Include map if requested
+        if ($atts['include_map'] === 'true') {
+            $map_atts = array(
+                'width' => $atts['map_width'],
+                'height' => $atts['map_height'],
+                'center_lat' => $atts['center_lat'],
+                'center_lng' => $atts['center_lng'],
+                'zoom' => $atts['zoom'],
+                'user_role' => $atts['user_role']
+            );
+            $output .= '<div class="directory-map-section">';
+            $output .= $this->display_clinic_map($map_atts);
+            $output .= '</div>';
+        }
+
+        // Results count placeholder (will be populated by JavaScript)
+        $output .= '<div class="search-results-count" style="display: none;"></div>';
+
+        // Listings container
+        $output .= '<div class="chiro-listings-grid">';
+
+        foreach ($chiropractors as $chiropractor) {
+            $output .= $this->render_chiropractor_listing($chiropractor, $atts);
+        }
+
+        $output .= '</div>'; // Close listings grid
+        $output .= '</div>'; // Close directory container
+
+        return $output;
+    }
+
+    /**
+     * Get comprehensive chiropractor data for directory display
+     */
+    private function get_chiropractor_directory_data($user_role = 'subscriber')
+    {
+        $chiropractors = array();
+
+        // Get users with the specified role
+        $users = get_users(array(
+            'role' => $user_role,
+            'fields' => 'all',
+        ));
+
+        foreach ($users as $user) {
+            $chiropractor_data = array(
+                'user_id' => $user->ID,
+                'display_name' => $user->display_name,
+                'user_email' => $user->user_email,
+                'date_registered' => $user->user_registered,
+                'locations' => array(),
+                'avatar_url' => get_avatar_url($user->ID, array('size' => 96)),
+                'bio' => get_user_meta($user->ID, 'description', true),
+                'website' => $user->user_url
+            );
+
+            // Define address sets for primary, secondary, and third addresses
+            $address_sets = array(
+                '' => 'Primary',
+                '_2' => 'Secondary', 
+                '_3' => 'Third'
+            );
+
+            $has_locations = false;
+
+            foreach ($address_sets as $suffix => $label) {
+                $location_data = $this->get_single_location_data($user->ID, $suffix, $label);
+                
+                if ($location_data && $this->location_has_data($location_data)) {
+                    $chiropractor_data['locations'][] = $location_data;
+                    $has_locations = true;
+                }
+            }
+
+            // Only include chiropractors who have at least one location with meaningful data
+            if ($has_locations) {
+                $chiropractors[] = $chiropractor_data;
+            }
+        }
+
+        return $chiropractors;
+    }
+
+    /**
+     * Get data for a single location
+     */
+    private function get_single_location_data($user_id, $suffix, $label)
+    {
+        $lat_key = 'mepr_clinic_lat' . $suffix;
+        $lng_key = 'mepr_clinic_lng' . $suffix;
+        $street_key = 'mepr_clinic_street' . $suffix;
+        $city_key = 'mepr_clinic_city' . $suffix;
+        $province_key = 'mepr_clinic_province' . $suffix;
+        $name_key = 'mepr_clinic_name' . $suffix;
+        $phone_key = 'mepr_clinic_phone' . $suffix;
+        $email_key = 'mepr_clinic_email_address' . $suffix;
+        $website_key = 'mepr_clinic_website' . $suffix;
+
+        $lat = get_user_meta($user_id, $lat_key, true);
+        $lng = get_user_meta($user_id, $lng_key, true);
+        $street = get_user_meta($user_id, $street_key, true);
+        $city = get_user_meta($user_id, $city_key, true);
+        $province = get_user_meta($user_id, $province_key, true);
+        $name = get_user_meta($user_id, $name_key, true);
+        $phone = get_user_meta($user_id, $phone_key, true);
+        $email = get_user_meta($user_id, $email_key, true);
+        $website = get_user_meta($user_id, $website_key, true);
+
+        $address_parts = array_filter(array($street, $city, $province));
+        $address = implode(', ', $address_parts);
+
+        return array(
+            'suffix' => $suffix,
+            'label' => $label,
+            'name' => $name,
+            'lat' => $lat ? floatval($lat) : null,
+            'lng' => $lng ? floatval($lng) : null,
+            'address' => $address,
+            'street' => $street,
+            'city' => $city,
+            'province' => $province,
+            'phone' => $phone,
+            'email' => $email,
+            'website' => $website,
+            'has_coordinates' => !empty($lat) && !empty($lng)
+        );
+    }
+
+    /**
+     * Check if location has meaningful data
+     */
+    private function location_has_data($location)
+    {
+        return !empty($location['street']) || !empty($location['city']) || 
+               !empty($location['phone']) || !empty($location['email']);
+    }
+
+    /**
+     * Sort chiropractors based on criteria
+     */
+    private function sort_chiropractors($chiropractors, $sort_by, $sort_order)
+    {
+        usort($chiropractors, function($a, $b) use ($sort_by, $sort_order) {
+            $result = 0;
+            
+            switch ($sort_by) {
+                case 'name':
+                    $result = strcasecmp($a['display_name'], $b['display_name']);
+                    break;
+                case 'location_count':
+                    $result = count($a['locations']) - count($b['locations']);
+                    break;
+                case 'date_registered':
+                    $result = strtotime($a['date_registered']) - strtotime($b['date_registered']);
+                    break;
+                default:
+                    $result = strcasecmp($a['display_name'], $b['display_name']);
+            }
+            
+            return $sort_order === 'desc' ? -$result : $result;
+        });
+
+        return $chiropractors;
+    }
+
+    /**
+     * Render the search interface
+     */
+    private function render_directory_search()
+    {
+        $output = '<div class="chiro-directory-search">';
+        $output .= '<h3>Search Chiropractors</h3>';
+        $output .= '<form id="chiro-search-form" role="search">';
+        $output .= '<div id="chiro-search-wrapper">';
+        $output .= '<input type="text" id="chiro-search-input" placeholder="Search by name, location, or contact info..." autocomplete="off">';
+        $output .= '<button type="submit" id="chiro-search-submit" aria-label="Search">';
+        $output .= '<i class="fa fa-search" aria-hidden="true"></i>';
+        $output .= '</button>';
+        $output .= '<button type="button" id="chiro-search-clear" aria-label="Clear search" style="display: none;">';
+        $output .= '&times;';
+        $output .= '</button>';
+        $output .= '</div>';
+        $output .= '</form>';
+        $output .= '</div>';
+
+        return $output;
+    }
+
+    /**
+     * Render a single chiropractor listing
+     */
+    private function render_chiropractor_listing($chiropractor, $atts)
+    {
+        $output = '<div class="chiro-listing" data-user-id="' . esc_attr($chiropractor['user_id']) . '">';
+        
+        // Header with avatar and basic info
+        $output .= '<div class="chiro-header">';
+        
+        // Avatar
+        if ($atts['show_avatar'] === 'true' && $chiropractor['avatar_url']) {
+            $output .= '<div class="chiro-avatar">';
+            $output .= '<img src="' . esc_url($chiropractor['avatar_url']) . '" alt="' . esc_attr($chiropractor['display_name']) . '" />';
+            $output .= '</div>';
+        }
+        
+        // Basic info
+        $output .= '<div class="chiro-info">';
+        $output .= '<h3 class="chiro-name">';
+        $output .= '<a href="#" onclick="return false;">' . esc_html($chiropractor['display_name']) . '</a>';
+        $output .= '</h3>';
+        
+        if (!empty($chiropractor['bio'])) {
+            $output .= '<div class="chiro-summary">' . esc_html(wp_trim_words($chiropractor['bio'], 20)) . '</div>';
+        }
+        
+        $output .= '</div>'; // Close chiro-info
+        $output .= '</div>'; // Close chiro-header
+
+        // Locations
+        if (!empty($chiropractor['locations'])) {
+            $location_count = count($chiropractor['locations']);
+            $output .= '<div class="chiro-locations">';
+            $output .= '<div class="chiro-locations-header">';
+            $output .= $location_count === 1 ? 'Clinic Location' : 'Clinic Locations (' . $location_count . ')';
+            $output .= '</div>';
+
+            foreach ($chiropractor['locations'] as $location) {
+                $output .= $this->render_location_item($location, $chiropractor['display_name'], $atts);
+            }
+
+            $output .= '</div>'; // Close chiro-locations
+        }
+
+        $output .= '</div>'; // Close chiro-listing
+
+        return $output;
+    }
+
+    /**
+     * Render a single location item
+     */
+    private function render_location_item($location, $chiropractor_name, $atts)
+    {
+        $output = '<div class="location-item">';
+        
+        // Location name with map link
+        $location_display_name = !empty($location['name']) ? 
+            $location['name'] : 
+            ($chiropractor_name . ' - ' . $location['label'] . ' Location');
+
+        $output .= '<div class="location-name">';
+        
+        if ($atts['show_map_links'] === 'true' && $location['has_coordinates']) {
+            // Create a unique clinic name for the map centering function
+            $map_clinic_name = $chiropractor_name . ' (' . $location['label'] . ')';
+            $output .= '<a href="#" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">';
+            $output .= esc_html($location_display_name);
+            $output .= '</a>';
+        } else {
+            $output .= esc_html($location_display_name);
+        }
+        
+        $output .= '</div>';
+
+        // Address
+        if (!empty($location['address'])) {
+            $output .= '<div class="location-address">' . esc_html($location['address']) . '</div>';
+        }
+
+        // Contact information
+        if ($atts['show_contact'] === 'true') {
+            $contact_items = array();
+            
+            if (!empty($location['phone'])) {
+                $contact_items[] = '<span class="location-phone">Phone: <a href="tel:' . esc_attr($location['phone']) . '">' . esc_html($location['phone']) . '</a></span>';
+            }
+            
+            if (!empty($location['email'])) {
+                $contact_items[] = '<span class="location-email">Email: <a href="mailto:' . esc_attr($location['email']) . '">' . esc_html($location['email']) . '</a></span>';
+            }
+            
+            if (!empty($location['website'])) {
+                $website_url = $location['website'];
+                if (!preg_match('/^https?:\/\//', $website_url)) {
+                    $website_url = 'http://' . $website_url;
+                }
+                $contact_items[] = '<span class="location-website"><a href="' . esc_url($website_url) . '" target="_blank">Visit Website</a></span>';
+            }
+
+            if (!empty($contact_items)) {
+                $output .= '<div class="location-contact">' . implode('', $contact_items) . '</div>';
+            }
+        }
+
+        // Map link button for locations with coordinates
+        if ($atts['show_map_links'] === 'true' && $location['has_coordinates']) {
+            $map_clinic_name = $chiropractor_name . ' (' . $location['label'] . ')';
+            $output .= '<a href="#" class="view-on-map-btn" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">View on Map</a>';
+        }
+
+        $output .= '</div>'; // Close location-item
+
+        return $output;
     }
 }
 
