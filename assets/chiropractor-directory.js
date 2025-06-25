@@ -3,12 +3,12 @@
  * Provides fuzzy search capabilities for the chiropractor directory
  */
 
-(function($) {
+(function ($) {
     'use strict';
 
     // Main search functionality
     var ChiroDirectorySearch = {
-        
+
         // Configuration
         config: {
             searchDelay: 300, // ms to wait after typing before searching
@@ -25,14 +25,14 @@
         currentFilter: '',
 
         // Initialize the search functionality
-        init: function() {
+        init: function () {
             this.cacheElements();
             this.bindEvents();
             this.prepareData();
         },
 
         // Cache DOM elements
-        cacheElements: function() {
+        cacheElements: function () {
             this.$searchInput = $('#chiro-search-input');
             this.$searchClear = $('#chiro-search-clear');
             this.$listingsContainer = $('.chiro-listings-grid');
@@ -41,31 +41,31 @@
         },
 
         // Bind event handlers
-        bindEvents: function() {
+        bindEvents: function () {
             var self = this;
 
             // Search input events
-            this.$searchInput.on('input keyup', function(e) {
+            this.$searchInput.on('input keyup', function (e) {
                 clearTimeout(self.searchTimeout);
-                self.searchTimeout = setTimeout(function() {
+                self.searchTimeout = setTimeout(function () {
                     self.performSearch();
                 }, self.config.searchDelay);
             });
 
             // Clear search button
-            this.$searchClear.on('click', function(e) {
+            this.$searchClear.on('click', function (e) {
                 e.preventDefault();
                 self.clearSearch();
             });
 
             // Form submit prevention
-            $('#chiro-search-form').on('submit', function(e) {
+            $('#chiro-search-form').on('submit', function (e) {
                 e.preventDefault();
                 self.performSearch();
             });
 
             // Enter key handling
-            this.$searchInput.on('keydown', function(e) {
+            this.$searchInput.on('keydown', function (e) {
                 if (e.which === 13) {
                     e.preventDefault();
                     self.performSearch();
@@ -74,14 +74,14 @@
         },
 
         // Prepare searchable data from listings
-        prepareData: function() {
+        prepareData: function () {
             var self = this;
             this.allListings = [];
 
-            this.$listings.each(function(index) {
+            this.$listings.each(function (index) {
                 var $listing = $(this);
                 var searchableText = self.extractSearchableText($listing);
-                
+
                 self.allListings.push({
                     element: $listing,
                     searchText: searchableText.toLowerCase(),
@@ -91,37 +91,37 @@
         },
 
         // Extract searchable text from a listing
-        extractSearchableText: function($listing) {
+        extractSearchableText: function ($listing) {
             var texts = [];
-            
+
             // Chiropractor name
             var name = $listing.find('.chiro-name').text().trim();
             if (name) texts.push(name);
-            
+
             // Summary/description
             var summary = $listing.find('.chiro-summary').text().trim();
             if (summary) texts.push(summary);
-            
+
             // Location names
-            $listing.find('.location-name').each(function() {
+            $listing.find('.location-name').each(function () {
                 var locationName = $(this).text().trim();
                 if (locationName) texts.push(locationName);
             });
-            
+
             // Addresses
-            $listing.find('.location-address').each(function() {
+            $listing.find('.location-address').each(function () {
                 var address = $(this).text().trim();
                 if (address) texts.push(address);
             });
-            
+
             // Phone numbers
-            $listing.find('.location-phone').each(function() {
+            $listing.find('.location-phone').each(function () {
                 var phone = $(this).text().trim();
                 if (phone) texts.push(phone);
             });
-            
+
             // Email addresses
-            $listing.find('.location-email').each(function() {
+            $listing.find('.location-email').each(function () {
                 var email = $(this).text().trim();
                 if (email) texts.push(email);
             });
@@ -130,7 +130,7 @@
         },
 
         // Perform the search
-        performSearch: function() {
+        performSearch: function () {
             var query = this.$searchInput.val().trim();
             this.currentFilter = query;
 
@@ -150,7 +150,7 @@
         },
 
         // Filter listings based on search query
-        filterListings: function(query) {
+        filterListings: function (query) {
             var self = this;
             var visibleCount = 0;
             var highlightTerms = this.prepareSearchTerms(query);
@@ -163,9 +163,9 @@
                 return;
             }
 
-            this.allListings.forEach(function(item) {
+            this.allListings.forEach(function (item) {
                 var matches = self.fuzzyMatch(item.searchText, query);
-                
+
                 if (matches) {
                     item.element.show();
                     self.highlightMatches(item.element, highlightTerms);
@@ -180,29 +180,29 @@
         },
 
         // Prepare search terms for highlighting
-        prepareSearchTerms: function(query) {
-            return query.toLowerCase().split(/\s+/).filter(function(term) {
+        prepareSearchTerms: function (query) {
+            return query.toLowerCase().split(/\s+/).filter(function (term) {
                 return term.length >= 3; // Only highlight terms with 3+ characters
             });
         },
 
         // Fuzzy matching algorithm - improved for better precision
-        fuzzyMatch: function(text, query) {
+        fuzzyMatch: function (text, query) {
             if (!query) return true;
-            
-            var queryTerms = query.toLowerCase().split(/\s+/).filter(function(term) {
+
+            var queryTerms = query.toLowerCase().split(/\s+/).filter(function (term) {
                 return term.length > 0;
             });
-            
+
             var totalScore = 0;
             var requiredMatches = 0;
 
-            queryTerms.forEach(function(term) {
+            queryTerms.forEach(function (term) {
                 if (term.length === 0) return;
-                
+
                 var termScore = 0;
                 var termMatched = false;
-                
+
                 // Exact word match gets highest priority
                 var exactWordRegex = new RegExp('\\b' + this.escapeRegex(term) + '\\b', 'i');
                 if (exactWordRegex.test(text)) {
@@ -223,11 +223,11 @@
                         termMatched = true;
                     }
                 }
-                
+
                 if (termMatched) {
                     requiredMatches++;
                 }
-                
+
                 totalScore += termScore;
             }.bind(this));
 
@@ -236,11 +236,11 @@
         },
 
         // Partial fuzzy matching for individual terms - more strict
-        partialFuzzyMatch: function(text, term) {
+        partialFuzzyMatch: function (text, term) {
             var termIndex = 0;
             var textIndex = 0;
             var matchedChars = 0;
-            
+
             while (termIndex < term.length && textIndex < text.length) {
                 if (term[termIndex] === text[textIndex]) {
                     termIndex++;
@@ -248,45 +248,45 @@
                 }
                 textIndex++;
             }
-            
+
             // Require at least 80% of characters to match in sequence
             var matchRatio = matchedChars / term.length;
             return termIndex === term.length && matchRatio >= 0.8;
         },
 
         // Calculate how well the term matches within the text
-        calculateMatchRatio: function(text, term) {
+        calculateMatchRatio: function (text, term) {
             var termIndex = 0;
             var matchedChars = 0;
-            
+
             for (var i = 0; i < text.length && termIndex < term.length; i++) {
                 if (text[i] === term[termIndex]) {
                     matchedChars++;
                     termIndex++;
                 }
             }
-            
+
             return matchedChars / term.length;
         },
 
         // Highlight matching terms in listings
-        highlightMatches: function($listing, terms) {
+        highlightMatches: function ($listing, terms) {
             var self = this;
-            
+
             // Clear existing highlights first
             this.clearHighlights($listing);
-            
+
             if (terms.length === 0) return;
 
             // Elements to search for highlighting
             var $searchableElements = $listing.find('.chiro-name, .chiro-summary, .location-name, .location-address');
-            
-            $searchableElements.each(function() {
+
+            $searchableElements.each(function () {
                 var $element = $(this);
                 var text = $element.text();
                 var highlightedText = text;
-                
-                terms.forEach(function(term) {
+
+                terms.forEach(function (term) {
                     if (term.length >= 3) { // Only highlight terms with 3+ characters
                         // Try exact word match first
                         var wordRegex = new RegExp('(\\b' + self.escapeRegex(term) + '\\b)', 'gi');
@@ -299,7 +299,7 @@
                         }
                     }
                 });
-                
+
                 if (highlightedText !== text) {
                     $element.html(highlightedText);
                 }
@@ -307,21 +307,21 @@
         },
 
         // Clear search highlights
-        clearHighlights: function($container) {
+        clearHighlights: function ($container) {
             var $target = $container || this.$listingsContainer;
-            $target.find('.' + this.config.highlightClass).each(function() {
+            $target.find('.' + this.config.highlightClass).each(function () {
                 var $this = $(this);
                 $this.replaceWith($this.text());
             });
         },
 
         // Escape regex special characters
-        escapeRegex: function(string) {
+        escapeRegex: function (string) {
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         },
 
         // Update results count display
-        updateResultsCount: function(count, query) {
+        updateResultsCount: function (count, query) {
             if (!this.$resultsCount.length) {
                 // Create results count element if it doesn't exist
                 this.$resultsCount = $('<div class="search-results-count"></div>');
@@ -332,7 +332,7 @@
                 // Display custom message
                 this.$resultsCount.text(count).show();
             } else if (query) {
-                var message = count === 1 ? 
+                var message = count === 1 ?
                     count + ' chiropractor found for "' + query + '"' :
                     count + ' chiropractors found for "' + query + '"';
                 this.$resultsCount.text(message).show();
@@ -342,9 +342,9 @@
         },
 
         // Handle no search results
-        handleNoResults: function(count) {
+        handleNoResults: function (count) {
             var $noResults = $('.' + this.config.noResultsClass);
-            
+
             if (count === 0 && this.currentFilter) {
                 if ($noResults.length === 0) {
                     $noResults = $('<div class="' + this.config.noResultsClass + '">No chiropractors found matching your search criteria. Try different keywords or check your spelling.</div>');
@@ -357,7 +357,7 @@
         },
 
         // Clear search and reset view
-        clearSearch: function() {
+        clearSearch: function () {
             this.$searchInput.val('');
             this.$searchClear.hide();
             this.currentFilter = '';
@@ -370,7 +370,7 @@
     };
 
     // Initialize when document is ready
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Only initialize if the chiropractor directory exists
         if ($('.chiro-directory-container').length > 0) {
             ChiroDirectorySearch.init();

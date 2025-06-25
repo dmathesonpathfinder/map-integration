@@ -506,6 +506,11 @@ class MapIntegration
             $this->clear_all_geocoding_data();
         }
 
+        // Handle clear failed geocoding markers action
+        if (isset($_POST['clear_failed_markers']) && wp_verify_nonce($_POST['_wpnonce'], 'clear_failed_markers_action')) {
+            $this->clear_all_failed_markers();
+        }
+
         // Get geocoding statistics
         $stats = $this->get_geocoding_stats();
 
@@ -749,6 +754,14 @@ class MapIntegration
                 <?php wp_nonce_field('clear_geocoding_data_action'); ?>
                 <input type="submit" name="clear_geocoding_data" class="button button-danger" value="Clear All Geocoding Data"
                     onclick="return confirm('Are you sure you want to clear all geocoding data from all users? This action cannot be undone.');">
+            </form>
+
+            <h2>Clear Failed Geocoding Markers</h2>
+            <p>Clear all failed geocoding markers to allow retry of previously failed addresses.</p>
+            <form method="post" action="">
+                <?php wp_nonce_field('clear_failed_markers_action'); ?>
+                <input type="submit" name="clear_failed_markers" class="button button-secondary" value="Clear Failed Markers"
+                    onclick="return confirm('This will allow the system to retry geocoding previously failed addresses. Continue?');">
             </form>
 
             <h2>Usage</h2>
@@ -1182,13 +1195,18 @@ class MapIntegration
             return;
         }
 
+        // Clear any previous failed markers since the address was updated
+        $this->clear_geocoding_failed($user_id, $address_suffix);
+
         // Geocode the address
         $coordinates = MapGeocoder::geocode_address($street, $city, $province);
         if ($coordinates) {
             MapGeocoder::save_coordinates($user_id, $coordinates, $address_suffix);
             MapGeocoder::log_message("Successfully geocoded address for user {$user_id} (suffix: {$address_suffix})");
         } else {
-            MapGeocoder::log_message("Failed to geocode address for user {$user_id} (suffix: {$address_suffix})");
+            // Mark as failed to prevent immediate re-processing
+            $this->mark_geocoding_failed($user_id, $address_suffix);
+            MapGeocoder::log_message("Failed to geocode address for user {$user_id} (suffix: {$address_suffix}) - marked as failed");
         }
     }
 
@@ -1665,11 +1683,15 @@ class MapIntegration
                     $status['total_success']++;
                     MapGeocoder::log_message("Background geocoding: Successfully geocoded address for user {$user_id} (suffix: {$suffix})");
                 } else {
+                    // Mark as failed attempt to prevent re-processing
+                    $this->mark_geocoding_failed($user_id, $suffix);
                     $status['total_failed']++;
-                    MapGeocoder::log_message("Background geocoding: Failed to geocode address for user {$user_id} (suffix: {$suffix})");
+                    MapGeocoder::log_message("Background geocoding: Failed to geocode address for user {$user_id} (suffix: {$suffix}) - marked as failed");
                 }
             } else {
-                MapGeocoder::log_message("Background geocoding: User {$user_id} has province-only address, skipping");
+                // Mark province-only addresses as processed to skip them
+                $this->mark_geocoding_failed($user_id, $suffix, 'province_only');
+                MapGeocoder::log_message("Background geocoding: User {$user_id} has province-only address, marking as skipped");
             }
             
             $status['total_processed']++;
@@ -1701,39 +1723,92 @@ class MapIntegration
         
         $users_needing_geocoding = array();
         
+               
         foreach ($address_sets as $suffix => $fields) {
             if (count($users_needing_geocoding) >= $limit) {
                 break;
             }
             
-            // Get users with addresses but no coordinates
-            $users_with_addresses = $wpdb->get_results($wpdb->prepare("
-                SELECT DISTINCT user_id 
-                FROM {$wpdb->usermeta} 
-                WHERE meta_key = %s 
-                AND meta_value != '' 
-                LIMIT %d
-            ", $fields['street'], $limit));
+            $lat_key = 'mepr_clinic_lat' . $suffix;
+            $street_key = $fields['street'];
+            $city_key = $fields['city'];
             
-            foreach ($users_with_addresses as $user_row) {
+            // Get users with addresses but no coordinates AND no failed markers
+            $users_without_coords = $wpdb->get_results($wpdb->prepare("
+                SELECT DISTINCT s.user_id 
+                FROM {$wpdb->usermeta} s
+                LEFT JOIN {$wpdb->usermeta} lat ON (s.user_id = lat.user_id AND lat.meta_key = %s)
+                LEFT JOIN {$wpdb->usermeta} failed ON (s.user_id = failed.user_id AND failed.meta_key = %s)
+                WHERE s.meta_key IN (%s, %s)
+                AND s.meta_value != '' 
+                AND (lat.meta_value IS NULL OR lat.meta_value = '' OR lat.meta_value = '0')
+                AND failed.meta_value IS NULL
+                ORDER BY s.user_id ASC
+                LIMIT %d
+            ", $lat_key, 'mepr_clinic_geocode_failed' . $suffix, $street_key, $city_key, $limit - count($users_needing_geocoding)));
+            
+            foreach ($users_without_coords as $user_row) {
                 if (count($users_needing_geocoding) >= $limit) {
                     break;
                 }
                 
                 $user_id = $user_row->user_id;
-                $existing_lat = get_user_meta($user_id, 'mepr_clinic_lat' . $suffix, true);
                 
-                // Check if coordinates are missing or invalid
-                if (empty($existing_lat) || floatval($existing_lat) == 0 || MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id)) {
+                // Double-check that this user actually has address data
+                $street = get_user_meta($user_id, $street_key, true);
+                $city = get_user_meta($user_id, $city_key, true);
+                
+                // Only include if they have street or city data (not just province)
+                if (!empty($street) || !empty($city)) {
                     $users_needing_geocoding[] = array(
                         'user_id' => $user_id,
                         'suffix' => $suffix,
                         'fields' => $fields
                     );
+                    
+                    MapGeocoder::log_message("Added user {$user_id} (suffix: {$suffix}) to geocoding queue - no coordinates found");
+                }
+            }
+            
+            // If we still need more users, check for province-level coordinates that need improvement
+            if (count($users_needing_geocoding) < $limit) {
+                $users_with_poor_coords = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT s.user_id 
+                    FROM {$wpdb->usermeta} s
+                    INNER JOIN {$wpdb->usermeta} lat ON (s.user_id = lat.user_id AND lat.meta_key = %s)
+                    LEFT JOIN {$wpdb->usermeta} failed ON (s.user_id = failed.user_id AND failed.meta_key = %s)
+                    WHERE s.meta_key IN (%s, %s)
+                    AND s.meta_value != '' 
+                    AND lat.meta_value != '' 
+                    AND lat.meta_value != '0'
+                    AND failed.meta_value IS NULL
+                    ORDER BY s.user_id ASC
+                    LIMIT %d
+                ", $lat_key, 'mepr_clinic_geocode_failed' . $suffix, $street_key, $city_key, $limit - count($users_needing_geocoding)));
+                
+                foreach ($users_with_poor_coords as $user_row) {
+                    if (count($users_needing_geocoding) >= $limit) {
+                        break;
+                    }
+                    
+                    $user_id = $user_row->user_id;
+                    $existing_lat = get_user_meta($user_id, $lat_key, true);
+                    
+                    // Check if coordinates are province-level (too general)
+                    if (MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id)) {
+                        $users_needing_geocoding[] = array(
+                            'user_id' => $user_id,
+                            'suffix' => $suffix,
+                            'fields' => $fields
+                        );
+                        
+                        MapGeocoder::log_message("Added user {$user_id} (suffix: {$suffix}) to geocoding queue - province-level coordinates need improvement");
+                    }
                 }
             }
         }
         
+        MapGeocoder::log_message("Found " . count($users_needing_geocoding) . " users needing geocoding (limit: {$limit})");
         return $users_needing_geocoding;
     }
     
@@ -2179,6 +2254,71 @@ class MapIntegration
         $output .= '</div>'; // Close location-item
 
         return $output;
+    }
+
+    /**
+     * Mark a user's address as failed geocoding attempt
+     */
+    private function mark_geocoding_failed($user_id, $suffix, $reason = 'failed')
+    {
+        $failed_key = 'mepr_clinic_geocode_failed' . $suffix;
+        $failed_at_key = 'mepr_clinic_geocode_failed_at' . $suffix;
+        
+        update_user_meta($user_id, $failed_key, $reason);
+        update_user_meta($user_id, $failed_at_key, current_time('mysql'));
+        
+        MapGeocoder::log_message("Marked user {$user_id} (suffix: {$suffix}) as failed geocoding: {$reason}");
+    }
+    
+    /**
+     * Clear failed geocoding markers for a user
+     */
+    private function clear_geocoding_failed($user_id, $suffix)
+    {
+        $failed_key = 'mepr_clinic_geocode_failed' . $suffix;
+        $failed_at_key = 'mepr_clinic_geocode_failed_at' . $suffix;
+        
+        delete_user_meta($user_id, $failed_key);
+        delete_user_meta($user_id, $failed_at_key);
+    }
+
+    /**
+     * Clear all failed geocoding markers from all users
+     */
+    public function clear_all_failed_markers()
+    {
+        global $wpdb;
+
+        MapGeocoder::log_message("Starting to clear all failed geocoding markers");
+
+        // Define all failed marker keys to remove
+        $failed_marker_keys = array(
+            'mepr_clinic_geocode_failed',
+            'mepr_clinic_geocode_failed_at',
+            'mepr_clinic_geocode_failed_2',
+            'mepr_clinic_geocode_failed_at_2',
+            'mepr_clinic_geocode_failed_3',
+            'mepr_clinic_geocode_failed_at_3'
+        );
+
+        $total_deleted = 0;
+
+        foreach ($failed_marker_keys as $key) {
+            $deleted = $wpdb->query($wpdb->prepare("
+                DELETE FROM {$wpdb->usermeta} 
+                WHERE meta_key = %s
+            ", $key));
+
+            if ($deleted !== false) {
+                $total_deleted += $deleted;
+                MapGeocoder::log_message("Deleted {$deleted} failed markers for meta key: {$key}");
+            }
+        }
+
+        $message = "Successfully cleared {$total_deleted} failed geocoding markers from all users. Previously failed addresses can now be retried.";
+        MapGeocoder::log_message($message);
+
+        echo '<div class="notice notice-success"><p>' . $message . '</p></div>';
     }
 }
 

@@ -1,27 +1,30 @@
-/* Chiropractor Directory Styles - Based on Dynamic User Directory */
+/* Chiropractor Directory Styles - CNS Blue Theme Integration */
 
 /* Search functionality */
 .chiro-directory-search {
     margin-bottom: 30px;
-    background: #f9f9f9;
+    background: #e4f3f9; /* CNS Accent / Four - Very light blue */
     padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #e1e1e1;
+    border-radius: 2px;
+    border: 1px solid #87d5f6; /* CNS Teal */
+    font-family: "Neufreit", sans-serif;
 }
 
 .chiro-directory-search h3 {
     margin-top: 0;
-    color: #333;
+    color: #035088; /* CNS Primary Blue */
     font-size: 18px;
     margin-bottom: 15px;
+    font-family: "Neufreit", sans-serif;
+    font-weight: 600;
 }
 
 #chiro-search-wrapper {
     display: flex;
     align-items: center;
     background: white;
-    border: 1px solid #c9c9c9;
-    border-radius: 4px;
+    border: 1px solid #57c7df; /* CNS Accent Three */
+    border-radius: 2px;
     overflow: hidden;
 }
 
@@ -30,38 +33,41 @@
     border: none;
     padding: 12px 15px;
     font-size: 15px;
-    font-family: sans-serif;
-    color: DimGray;
-    outline: none;
+    font-family: "Neufreit", sans-serif;
+    color: #035088; /* CNS Primary Blue */
 }
 
 #chiro-search-input:focus {
-    border-color: DarkGray;
+    border-color: #035088; /* CNS Primary Blue */
+    outline: 2px solid rgba(3, 80, 136, 0.1);
 }
 
 #chiro-search-input::placeholder {
-    color: #C0C0C0;
-    font-weight: bold;
+    color: #57c7df; /* CNS Accent Three */
+    font-weight: normal;
+    font-family: "Neufreit", sans-serif;
 }
 
 /* Clear search button */
 #chiro-search-clear {
-    background: #e74c3c;
+    background: #035088; /* CNS Primary Blue */
     color: white;
     border: none;
     padding: 12px 15px;
     cursor: pointer;
     transition: background-color 0.3s ease;
     display: none;
+    font-family: "Neufreit", sans-serif;
 }
 
 #chiro-search-clear:hover {
-    background: #c0392b;
+    background: #13345b; /* CNS Accent Five - Darker blue */
 }
 
 /* Directory container */
 .chiro-directory-container {
     max-width: 1200px;
+    font-family: "Neufreit", sans-serif;
 }
 
 /* Listings grid/container */
@@ -74,14 +80,15 @@
     margin: 7px 7px 25px 4px;
     padding: 20px;
     background: white;
-    border-radius: 8px;
-    border: 1px solid #e1e1e1;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius:2px;
+    border: 1px solid #87d5f6; /* CNS Teal border */
+    box-shadow: 0 1px 3px rgba(3, 80, 136, 0.1);
     transition: box-shadow 0.3s ease;
 }
 
 .chiro-listing:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 6px rgba(3, 80, 136, 0.2);
+    border-color: #57c7df; /* CNS Accent Three */
 }
 
 /* Chiropractor header */
@@ -97,7 +104,8 @@
     font-size: 22px;
     font-weight: 700;
     margin: 0 0 5px 0;
-    color: #2c3e50;
+    color: #035088; /* CNS Primary Blue */
+    font-family: "Neufreit", sans-serif;
 }
 
 .chiro-name a {
@@ -114,7 +122,7 @@
 }
 
 .chiro-name a.map-clickable:hover {
-    color: #3498db;
+    color: #57c7df; /* CNS Accent Three */
     text-decoration: none;
 }
 
@@ -124,6 +132,7 @@
     margin-left: 8px;
     opacity: 0.6;
     transition: opacity 0.3s ease;
+    color: #87d5f6; /* CNS Teal */
 }
 
 .chiro-name a.map-clickable:hover:after {
@@ -131,14 +140,15 @@
 }
 
 .chiro-name a:hover {
-    color: #3498db;
+    color: #57c7df; /* CNS Accent Three */
     text-decoration: none;
 }
 
 .chiro-summary {
-    color: #7f8c8d;
+    color: #666;
     margin-bottom: 10px;
     font-style: italic;
+    font-family: "Neufreit", sans-serif;
 }
 
 /* Locations section */
@@ -149,13 +159,14 @@
 .chiro-locations-header {
     font-weight: 600;
     margin-bottom: 10px;
-    color: #34495e;
+    color: #035088; /* CNS Primary Blue */
     font-size: 16px;
+    font-family: "Neufreit", sans-serif;
 }
 
 .location-item {
     background: #ffffff;
-    border: 1px solid #e9ecef;
+    border: 1px solid #87d5f6; /* CNS Teal */
     border-radius: 6px;
     padding: 15px;
     margin-bottom: 10px;
@@ -163,8 +174,8 @@
 }
 
 .location-item:hover {
-    background: #e3f2fd;
-    border-color: #2196f3;
+    background: #e4f3f9; /* CNS Accent Four - Very light blue */
+    border-color: #57c7df; /* CNS Accent Three */
 }
 
 /* Clickable location items */
@@ -174,22 +185,23 @@
 }
 
 .location-item.location-clickable:hover {
-    background: #e8f5e8;
-    border-color: #27ae60;
+    background: #e4f3f9; /* CNS Accent Four */
+    border-color: #035088; /* CNS Primary Blue */
     transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 8px rgba(3, 80, 136, 0.15);
 }
 
 .location-item.location-clickable:after {
     content: "🗺️ Click to view on map";
     font-size: 11px;
-    color: #27ae60;
+    color: #035088; /* CNS Primary Blue */
     position: absolute;
     top: 8px;
     right: 12px;
     opacity: 0;
     transition: opacity 0.3s ease;
     font-weight: 500;
+    font-family: "Neufreit", sans-serif;
 }
 
 .location-item.location-clickable:hover:after {
@@ -199,8 +211,9 @@
 .location-name {
     font-weight: 600;
     margin-bottom: 8px;
-    color: #2c3e50;
+    color: #035088; /* CNS Primary Blue */
     font-size: 16px;
+    font-family: "Neufreit", sans-serif;
 }
 
 .location-name a.map-clickable:hover:after {
@@ -208,13 +221,14 @@
 }
 
 .location-name a:hover {
-    color: #3498db;
+    color: #57c7df; /* CNS Accent Three */
 }
 
 .location-address {
-    color: #5a6c7d;
+    color: #13345b; /* CNS Accent Five - Dark blue for readability */
     margin-bottom: 5px;
     font-size: 14px;
+    font-family: "Neufreit", sans-serif;
 }
 
 .location-contact {
@@ -222,44 +236,49 @@
     flex-wrap: wrap;
     gap: 15px;
     font-size: 14px;
+    font-family: "Neufreit", sans-serif;
 }
 
 .location-phone,
 .location-email,
 .location-website {
-    color: #6c757d;
+    color: #13345b; /* CNS Accent Five */
 }
 
 .location-phone a,
 .location-email a,
 .location-website a {
-    color: #3498db;
+    color: #035088; /* CNS Primary Blue */
     text-decoration: none;
     position: relative;
     z-index: 10; /* Ensure links are clickable over the location item */
+    font-family: "Neufreit", sans-serif;
 }
 
 .location-phone a:hover,
 .location-email a:hover,
 .location-website a:hover {
     text-decoration: underline;
-    color: #2980b9;
+    color: #57c7df; /* CNS Accent Three */
 }
 
 /* No results message */
 .no-results {
     text-align: center;
     padding: 40px 20px;
-    color: #7f8c8d;
+    color: #13345b; /* CNS Accent Five */
     font-style: italic;
-    background: #f8f9fa;
+    background: #e4f3f9; /* CNS Accent Four */
     border-radius: 8px;
     margin: 20px 0;
+    border: 1px solid #87d5f6; /* CNS Teal */
+    font-family: "Neufreit", sans-serif;
 }
 
 /* Search highlighting */
 .search-highlight {
-    background-color: #fff3cd;
+    background-color: #87d5f6; /* CNS Teal background */
+    color: #035088; /* CNS Primary Blue text */
     padding: 1px 3px;
     border-radius: 2px;
     font-weight: 600;
@@ -269,7 +288,8 @@
 .chiro-directory-loading {
     text-align: center;
     padding: 20px;
-    color: #6c757d;
+    color: #035088; /* CNS Primary Blue */
+    font-family: "Neufreit", sans-serif;
 }
 
 .chiro-directory-loading:before {
@@ -288,8 +308,9 @@
 /* Results count */
 .search-results-count {
     margin-bottom: 20px;
-    color: #6c757d;
+    color: #13345b; /* CNS Accent Five */
     font-style: italic;
+    font-family: "Neufreit", sans-serif;
 }
 
 /* Responsive design */
@@ -306,15 +327,32 @@
     #chiro-search-clear {
         border-radius: 0 0 4px 4px;
     }
+
+    .chiro-listing {
+        margin: 5px 0 20px 0;
+        padding: 15px;
+    }
+
+    .chiro-name {
+        font-size: 20px;
+    }
+
+    .location-item.location-clickable:after {
+        font-size: 10px;
+        top: 6px;
+        right: 8px;
+    }
 }
 
 /* Alphabetical navigation (if we add it later) */
 .alpha-nav {
-    background: #f8f9fa;
+    background: #e4f3f9; /* CNS Accent Four */
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
     text-align: center;
+    border: 1px solid #87d5f6; /* CNS Teal */
+    font-family: "Neufreit", sans-serif;
 }
 
 .alpha-nav a {
@@ -322,14 +360,15 @@
     padding: 5px 8px;
     margin: 2px;
     text-decoration: none;
-    color: #3498db;
+    color: #035088; /* CNS Primary Blue */
     border-radius: 3px;
     transition: all 0.3s ease;
+    font-family: "Neufreit", sans-serif;
 }
 
 .alpha-nav a:hover,
 .alpha-nav a.active {
-    background: #3498db;
+    background: #035088; /* CNS Primary Blue */
     color: white;
 }
 
