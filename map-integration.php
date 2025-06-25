@@ -549,9 +549,11 @@ class MapIntegration
             <p>The plugin automatically geocodes clinic addresses when they are updated.</p>
 
             <h3>Map Shortcodes</h3>
-            <p>Use these shortcodes to display maps:</p>
+            <p>Use these shortcodes to display maps and listings:</p>
             <ul>
                 <li><code>[map_integration]</code> - Display all clinic locations on an interactive map</li>
+                <li><code>[map_integration show_listings="true"]</code> - Display clinic listings only</li>
+                <li><code>[map_integration show_listings="true" show_clinics="true"]</code> - Display both listings and map</li>
                 <li><code>[map_integration width="800px" height="500px"]</code> - Custom size map</li>
                 <li><code>[map_integration center_lat="44.6488" center_lng="-63.5752" zoom="8"]</code> - Custom center and zoom</li>
                 <li><code>[map_integration show_clinics="false" location="Custom Location"]</code> - Legacy placeholder map</li>
@@ -622,15 +624,24 @@ class MapIntegration
             'height' => '400px',
             'location' => 'Halifax, NS',
             'show_clinics' => 'true',
+            'show_listings' => 'false',
             'center_lat' => '44.6488', // Default to Nova Scotia
             'center_lng' => '-63.5752',
             'zoom' => '7',
             'user_role' => 'subscriber' // Default to subscribers only
         ), $atts);
 
+        $output = '';
+        
+        // Show listings if requested
+        if ($atts['show_listings'] === 'true') {
+            $output .= $this->display_clinic_listings($atts);
+        }
+        
+        // Show map if requested
         if ($atts['show_clinics'] === 'true') {
-            return $this->display_clinic_map($atts);
-        } else {
+            $output .= $this->display_clinic_map($atts);
+        } else if ($atts['show_listings'] !== 'true') {
             // Legacy placeholder map
             $output = '<div class="map-integration-container" style="width: ' . esc_attr($atts['width']) . '; height: ' . esc_attr($atts['height']) . ';">';
             $output .= '<div class="map-placeholder">';
@@ -639,8 +650,9 @@ class MapIntegration
             $output .= '<p><em>Connect your preferred map service API to display interactive maps here.</em></p>';
             $output .= '</div>';
             $output .= '</div>';
-            return $output;
         }
+        
+        return $output;
     }
     /**
      * Display interactive clinic map with Leaflet.js
@@ -738,6 +750,151 @@ class MapIntegration
         }
 
         return $clinic_data;
+    }
+
+    /**
+     * Display clinic listings with improved UI
+     */
+    public function display_clinic_listings($atts)
+    {
+        // Get all clinic locations with coordinates (filtered by user role)
+        $clinic_data = $this->get_all_clinic_coordinates($atts['user_role']);
+        
+        if (empty($clinic_data)) {
+            return '<div class="clinic-listings-container"><p>No clinic locations found.</p></div>';
+        }
+        
+        // Group clinics by user (chiropractor) to handle multiple locations
+        $grouped_clinics = array();
+        foreach ($clinic_data as $clinic) {
+            $user_id = $clinic['user_id'];
+            if (!isset($grouped_clinics[$user_id])) {
+                $grouped_clinics[$user_id] = array(
+                    'user_id' => $user_id,
+                    'chiropractor_name' => '',
+                    'locations' => array()
+                );
+            }
+            
+            // Extract chiropractor name (remove location suffix)
+            $chiropractor_name = $clinic['name'];
+            if (preg_match('/^(.+?)\s*\((?:Primary|Secondary|Third)\)$/', $chiropractor_name, $matches)) {
+                $chiropractor_name = trim($matches[1]);
+            }
+            
+            if (empty($grouped_clinics[$user_id]['chiropractor_name'])) {
+                $grouped_clinics[$user_id]['chiropractor_name'] = $chiropractor_name;
+            }
+            
+            $grouped_clinics[$user_id]['locations'][] = $clinic;
+        }
+        
+        // Generate unique map ID for the listings to work with
+        $map_id = 'map-integration-' . uniqid();
+        
+        $output = '<div class="clinic-listings-container">';
+        
+        foreach ($grouped_clinics as $group) {
+            $chiropractor_name = $group['chiropractor_name'];
+            $locations = $group['locations'];
+            
+            // Determine if this chiropractor has multiple locations
+            $has_multiple_locations = count($locations) > 1;
+            
+            if ($has_multiple_locations) {
+                // Group display for multiple locations
+                $output .= '<div class="clinic-group clinic-group-multiple">';
+                $output .= '<div class="clinic-group-header">';
+                $output .= '<h3 class="chiropractor-name">' . esc_html($chiropractor_name) . '</h3>';
+                $output .= '<p class="multiple-locations-note">' . count($locations) . ' locations</p>';
+                $output .= '</div>';
+                
+                foreach ($locations as $location) {
+                    $output .= $this->render_single_location($location, $chiropractor_name, true);
+                }
+                
+                $output .= '</div>'; // Close clinic-group-multiple
+            } else {
+                // Single location display
+                $output .= '<div class="clinic-group clinic-group-single">';
+                $output .= $this->render_single_location($locations[0], $chiropractor_name, false);
+                $output .= '</div>'; // Close clinic-group-single
+            }
+        }
+        
+        $output .= '</div>'; // Close clinic-listings-container
+        
+        // Add a script to handle clicks when no map is present
+        $output .= '<script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            // Provide fallback if centerMapOnClinic is not defined (no map present)
+            if (typeof window.centerMapOnClinic === "undefined") {
+                window.centerMapOnClinic = function(clinicName) {
+                    alert("Map not available. Clinic: " + clinicName);
+                };
+            }
+        });
+        </script>';
+        
+        return $output;
+    }
+    
+    /**
+     * Render a single clinic location listing
+     */
+    private function render_single_location($location, $chiropractor_name, $is_grouped = false)
+    {
+        $clinic_name = $location['name'];
+        $address = $location['address'];
+        $phone = $location['phone'];
+        $email = $location['email'];
+        $website = $location['website'];
+        
+        // Extract location name from clinic name if it has a suffix
+        $location_name = '';
+        if (preg_match('/\(([^)]+)\)$/', $clinic_name, $matches)) {
+            $location_name = $matches[1];
+        }
+        
+        $output = '<div class="clinic-listing">';
+        
+        if (!$is_grouped) {
+            // For single locations, show chiropractor name prominently
+            $output .= '<h3 class="chiropractor-name">';
+            $output .= '<a href="#" class="clinic-link" onclick="centerMapOnClinic(\'' . esc_js($clinic_name) . '\'); return false;">';
+            $output .= esc_html($chiropractor_name);
+            $output .= '</a>';
+            $output .= '</h3>';
+        } else {
+            // For grouped locations, show location name as clickable
+            if ($location_name) {
+                $output .= '<h4 class="location-name">';
+                $output .= '<a href="#" class="clinic-link" onclick="centerMapOnClinic(\'' . esc_js($clinic_name) . '\'); return false;">';
+                $output .= esc_html($location_name) . ' Location';
+                $output .= '</a>';
+                $output .= '</h4>';
+            }
+        }
+        
+        if ($address) {
+            $output .= '<p class="clinic-address">' . esc_html($address) . '</p>';
+        }
+        
+        if ($phone) {
+            $output .= '<p class="clinic-phone">Phone: ' . esc_html($phone) . '</p>';
+        }
+        
+        if ($email) {
+            $output .= '<p class="clinic-email">Email: <a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a></p>';
+        }
+        
+        if ($website) {
+            $output .= '<p class="clinic-website"><a href="' . esc_url($website) . '" target="_blank">Visit Website</a></p>';
+        }
+        
+        $output .= '</div>'; // Close clinic-listing
+        
+        return $output;
     }
 
     /**
