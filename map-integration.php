@@ -2045,9 +2045,6 @@ class MapIntegration
         $output .= '<form id="chiro-search-form" role="search">';
         $output .= '<div id="chiro-search-wrapper">';
         $output .= '<input type="text" id="chiro-search-input" placeholder="Search by name, location, or contact info..." autocomplete="off">';
-        $output .= '<button type="submit" id="chiro-search-submit" aria-label="Search">';
-        $output .= '<i class="fa fa-search" aria-hidden="true"></i>';
-        $output .= '</button>';
         $output .= '<button type="button" id="chiro-search-clear" aria-label="Clear search" style="display: none;">';
         $output .= '&times;';
         $output .= '</button>';
@@ -2124,26 +2121,29 @@ class MapIntegration
      */
     private function render_location_item($location, $chiropractor_name, $atts, $user_id)
     {
-        $output = '<div class="location-item">';
+        // Generate the clinic name exactly as it appears on the map for locations with coordinates
+        $map_clinic_name = '';
+        $is_clickable = false;
+        if ($atts['show_map_links'] === 'true' && $location['has_coordinates']) {
+            $user = get_user_by('ID', $user_id);
+            $map_clinic_name = $location['name'] ?: ($user->display_name . ' (' . $location['label'] . ')');
+            $is_clickable = true;
+        }
+
+        // Start location item with clickable wrapper if applicable
+        if ($is_clickable) {
+            $output = '<div class="location-item location-clickable" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;" style="cursor: pointer;">';
+        } else {
+            $output = '<div class="location-item">';
+        }
         
-        // Location name with map link
+        // Location name 
         $location_display_name = !empty($location['name']) ? 
             $location['name'] : 
             ($chiropractor_name . ' - ' . $location['label'] . ' Location');
 
         $output .= '<div class="location-name">';
-        
-        if ($atts['show_map_links'] === 'true' && $location['has_coordinates']) {
-            // Generate the clinic name exactly as it appears on the map  
-            $user = get_user_by('ID', $user_id);
-            $map_clinic_name = $location['name'] ?: ($user->display_name . ' (' . $location['label'] . ')');
-            $output .= '<a href="#" class="map-clickable" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">';
-            $output .= esc_html($location_display_name);
-            $output .= '</a>';
-        } else {
-            $output .= esc_html($location_display_name);
-        }
-        
+        $output .= esc_html($location_display_name);
         $output .= '</div>';
 
         // Address
@@ -2156,11 +2156,11 @@ class MapIntegration
             $contact_items = array();
             
             if (!empty($location['phone'])) {
-                $contact_items[] = '<span class="location-phone">Phone: <a href="tel:' . esc_attr($location['phone']) . '">' . esc_html($location['phone']) . '</a></span>';
+                $contact_items[] = '<span class="location-phone">Phone: <a href="tel:' . esc_attr($location['phone']) . '" onclick="event.stopPropagation();">' . esc_html($location['phone']) . '</a></span>';
             }
             
             if (!empty($location['email'])) {
-                $contact_items[] = '<span class="location-email">Email: <a href="mailto:' . esc_attr($location['email']) . '">' . esc_html($location['email']) . '</a></span>';
+                $contact_items[] = '<span class="location-email">Email: <a href="mailto:' . esc_attr($location['email']) . '" onclick="event.stopPropagation();">' . esc_html($location['email']) . '</a></span>';
             }
             
             if (!empty($location['website'])) {
@@ -2168,20 +2168,12 @@ class MapIntegration
                 if (!preg_match('/^https?:\/\//', $website_url)) {
                     $website_url = 'http://' . $website_url;
                 }
-                $contact_items[] = '<span class="location-website"><a href="' . esc_url($website_url) . '" target="_blank">Visit Website</a></span>';
+                $contact_items[] = '<span class="location-website"><a href="' . esc_url($website_url) . '" target="_blank" onclick="event.stopPropagation();">Visit Website</a></span>';
             }
 
             if (!empty($contact_items)) {
                 $output .= '<div class="location-contact">' . implode('', $contact_items) . '</div>';
             }
-        }
-
-        // Map link button for locations with coordinates
-        if ($atts['show_map_links'] === 'true' && $location['has_coordinates']) {
-            // Generate the clinic name exactly as it appears on the map
-            $user = get_user_by('ID', $user_id);
-            $map_clinic_name = $location['name'] ?: ($user->display_name . ' (' . $location['label'] . ')');
-            $output .= '<a href="#" class="view-on-map-btn map-clickable" onclick="centerMapOnClinic(\'' . esc_js($map_clinic_name) . '\'); return false;">View on Map</a>';
         }
 
         $output .= '</div>'; // Close location-item

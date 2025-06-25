@@ -13993,3 +13993,379 @@
 [2025-06-25 15:18:24] All geocoding attempts failed for: street=91, Abbington Ave, Abbington Ave, city=Bedford, province=Nova Scotia
 [2025-06-25 15:18:24] Bulk geocoding: Failed to geocode address for user 815 (suffix: _3)
 [2025-06-25 15:18:24] Bulk geocoding completed: 109 processed, 78 successful, 344s
+[2025-06-25 16:53:13] Background bulk geocoding started
+[2025-06-25 16:53:13] Processing geocoding batch...
+[2025-06-25 16:53:13] Background processing user 618: street='1567 Grafton Street', city='Haliax', province='ns'
+[2025-06-25 16:53:13] Trying geocode for: 1567 Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-25 16:53:13] Making API request to: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:13] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:14] API Response: Code 200 - OK
+[2025-06-25 16:53:14] API returned 0 results
+[2025-06-25 16:53:14] No geocoding results found for address: 1567 Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-25 16:53:14] Trying geocode for: 1567 Grafton Street, Haliax, Nova Scotia
+[2025-06-25 16:53:14] Making API request to: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:14] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:15] API Response: Code 200 - OK
+[2025-06-25 16:53:15] API returned 0 results
+[2025-06-25 16:53:15] No geocoding results found for address: 1567 Grafton Street, Haliax, Nova Scotia
+[2025-06-25 16:53:15] All geocoding attempts failed for: street=1567 Grafton Street, city=Haliax, province=Nova Scotia
+[2025-06-25 16:53:15] Trying enhanced fallback strategies for: street='1567 Grafton Street', city='Haliax', province='ns'
+[2025-06-25 16:53:15] All geocoding attempts failed for: street=, city=Haliax, province=Nova Scotia
+[2025-06-25 16:53:15] All geocoding attempts failed for: street=, city=Haliax, province=
+[2025-06-25 16:53:15] All geocoding attempts failed for: street=, city=, province=Nova Scotia
+[2025-06-25 16:53:15] All enhanced fallback strategies failed
+[2025-06-25 16:53:15] Background geocoding: Failed to geocode address for user 618 (suffix: )
+[2025-06-25 16:53:16] Background processing user 619: street='Fall River Rd', city='Fall River', province='ns'
+[2025-06-25 16:53:16] Trying geocode for: Fall River Rd, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:16] Making API request to: https://nominatim.openstreetmap.org/search?q=Fall+River+Rd%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:16] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=Fall+River+Rd%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:17] API Response: Code 200 - OK
+[2025-06-25 16:53:17] API returned 1 results
+[2025-06-25 16:53:17] Geocoding successful: lat=44.8080393, lng=-63.6199608, display_name='Fall River Road, Tamarac Hills, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1E6, Canada', type='secondary'
+[2025-06-25 16:53:17] Successfully geocoded: Fall River Rd, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:17] Background geocoding: Successfully geocoded address for user 619 (suffix: )
+[2025-06-25 16:53:18] Background processing user 620: street='2-3290 Hwy 2', city='Fall River', province='ns'
+[2025-06-25 16:53:18] Trying geocode for: 2-3290 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:18] Making API request to: https://nominatim.openstreetmap.org/search?q=2-3290+Hwy+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:18] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=2-3290+Hwy+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:20] API Response: Code 200 - OK
+[2025-06-25 16:53:20] API returned 1 results
+[2025-06-25 16:53:20] Geocoding successful: lat=44.8173683, lng=-63.6101317, display_name='Pet Valu, 3290, Highway 2, Fall River Plaza, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1J5, Canada', type='pet'
+[2025-06-25 16:53:20] Successfully geocoded: 2-3290 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:20] Background geocoding: Successfully geocoded address for user 620 (suffix: )
+[2025-06-25 16:53:21] Background processing user 621: street='1160 Bedford Highway', city='Bedford', province='ns'
+[2025-06-25 16:53:21] Trying geocode for: 1160 Bedford Highway, Bedford, Nova Scotia, Canada
+[2025-06-25 16:53:21] Making API request to: https://nominatim.openstreetmap.org/search?q=1160+Bedford+Highway%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:21] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1160+Bedford+Highway%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:22] API Response: Code 200 - OK
+[2025-06-25 16:53:22] API returned 1 results
+[2025-06-25 16:53:22] Geocoding successful: lat=44.7217218, lng=-63.6718357, display_name='1160, Bedford Highway, Basinview, Bedford, Halifax Regional Municipality, Halifax County, Nova Scotia, B4A 1C1, Canada', type='yes'
+[2025-06-25 16:53:22] Successfully geocoded: 1160 Bedford Highway, Bedford, Nova Scotia, Canada
+[2025-06-25 16:53:22] Background geocoding: Successfully geocoded address for user 621 (suffix: )
+[2025-06-25 16:53:23] Background processing user 622: street='6112 Willow Street', city='Halifax', province='ns'
+[2025-06-25 16:53:23] Trying geocode for: 6112 Willow Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:53:23] Making API request to: https://nominatim.openstreetmap.org/search?q=6112+Willow+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:23] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=6112+Willow+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:24] API Response: Code 200 - OK
+[2025-06-25 16:53:24] API returned 1 results
+[2025-06-25 16:53:24] Geocoding successful: lat=44.6529255, lng=-63.5956369, display_name='6112, Willow Street, Downtown Halifax, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 1M2, Canada', type='house'
+[2025-06-25 16:53:24] Successfully geocoded: 6112 Willow Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:53:24] Background geocoding: Successfully geocoded address for user 622 (suffix: )
+[2025-06-25 16:53:25] Background processing user 623: street='33 Ochterloney St.', city='Dartmouth', province='ns'
+[2025-06-25 16:53:25] Trying geocode for: 33 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-25 16:53:25] Making API request to: https://nominatim.openstreetmap.org/search?q=33+Ochterloney+Street%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:25] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=33+Ochterloney+Street%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:26] API Response: Code 200 - OK
+[2025-06-25 16:53:26] API returned 1 results
+[2025-06-25 16:53:26] Geocoding successful: lat=44.6663207, lng=-63.5691825, display_name='Quaker Landing, 33, Ochterloney Street, Park Avenue, Downtown Dartmouth, Dartmouth, Halifax Regional Municipality, Halifax County, Nova Scotia, B2Y 2P5, Canada', type='office'
+[2025-06-25 16:53:26] Successfully geocoded: 33 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-25 16:53:26] Background geocoding: Successfully geocoded address for user 623 (suffix: )
+[2025-06-25 16:53:27] Background processing user 624: street='3667 Strawberry Hill Street', city='Halifax', province='ns'
+[2025-06-25 16:53:27] Trying geocode for: 3667 Strawberry Hill Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:53:27] Making API request to: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:27] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:28] API Response: Code 200 - OK
+[2025-06-25 16:53:28] API returned 1 results
+[2025-06-25 16:53:28] Geocoding successful: lat=44.6619829, lng=-63.6194088, display_name='3667, Strawberry Hill Street, Convoy Place, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 5A8, Canada', type='commercial'
+[2025-06-25 16:53:28] Successfully geocoded: 3667 Strawberry Hill Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:53:28] Background geocoding: Successfully geocoded address for user 624 (suffix: )
+[2025-06-25 16:53:29] Background processing user 626: street='3-850 Grand Lake Road', city='Sydney', province='ns'
+[2025-06-25 16:53:29] Trying geocode for: 3-850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-25 16:53:29] Making API request to: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:29] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:33] API Response: Code 200 - OK
+[2025-06-25 16:53:33] API returned 0 results
+[2025-06-25 16:53:33] No geocoding results found for address: 3-850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-25 16:53:33] Trying geocode for: 3-850 Grand Lake Road, Sydney, Nova Scotia
+[2025-06-25 16:53:33] Making API request to: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:33] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:35] API Response: Code 200 - OK
+[2025-06-25 16:53:35] API returned 0 results
+[2025-06-25 16:53:35] No geocoding results found for address: 3-850 Grand Lake Road, Sydney, Nova Scotia
+[2025-06-25 16:53:35] All geocoding attempts failed for: street=3-850 Grand Lake Road, city=Sydney, province=Nova Scotia
+[2025-06-25 16:53:35] Trying enhanced fallback strategies for: street='3-850 Grand Lake Road', city='Sydney', province='ns'
+[2025-06-25 16:53:35] All geocoding attempts failed for: street=, city=Sydney, province=Nova Scotia
+[2025-06-25 16:53:35] All geocoding attempts failed for: street=, city=Sydney, province=
+[2025-06-25 16:53:35] All geocoding attempts failed for: street=, city=, province=Nova Scotia
+[2025-06-25 16:53:35] All enhanced fallback strategies failed
+[2025-06-25 16:53:35] Background geocoding: Failed to geocode address for user 626 (suffix: )
+[2025-06-25 16:53:36] Background processing user 628: street='167 Highway 214, Suite 101', city='Elmsdale', province='ns'
+[2025-06-25 16:53:36] Trying geocode for: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:53:36] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:36] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:37] API Response: Code 200 - OK
+[2025-06-25 16:53:37] API returned 0 results
+[2025-06-25 16:53:37] No geocoding results found for address: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:53:37] Trying geocode for: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia
+[2025-06-25 16:53:37] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:37] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:40] API Response: Code 200 - OK
+[2025-06-25 16:53:40] API returned 0 results
+[2025-06-25 16:53:40] No geocoding results found for address: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia
+[2025-06-25 16:53:40] Trying geocode for: 167 Highway 214, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:53:40] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:40] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:42] API Response: Code 200 - OK
+[2025-06-25 16:53:42] API returned 1 results
+[2025-06-25 16:53:42] Geocoding successful: lat=44.9696227, lng=-63.5052458, display_name='167, Highway 214, Elmsdale, East Hants District Municipality, Hants County, Nova Scotia, B2S 1H7, Canada', type='house'
+[2025-06-25 16:53:42] Successfully geocoded: 167 Highway 214, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:53:42] Background geocoding: Successfully geocoded address for user 628 (suffix: _2)
+[2025-06-25 16:53:43] Background processing user 637: street='521 Robert St', city='Fall River', province='ns'
+[2025-06-25 16:53:43] Trying geocode for: 521 Robert St, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:43] Making API request to: https://nominatim.openstreetmap.org/search?q=521+Robert+St%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:43] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=521+Robert+St%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:44] API Response: Code 200 - OK
+[2025-06-25 16:53:44] API returned 1 results
+[2025-06-25 16:53:44] Geocoding successful: lat=44.8247449, lng=-63.5993687, display_name='521, Robert Street, Schwarzwald Heights, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 0E1, Canada', type='yes'
+[2025-06-25 16:53:44] Successfully geocoded: 521 Robert St, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:44] Background geocoding: Successfully geocoded address for user 637 (suffix: _2)
+[2025-06-25 16:53:50] Processing geocoding batch...
+[2025-06-25 16:53:50] Background processing user 618: street='1567 Grafton Street', city='Haliax', province='ns'
+[2025-06-25 16:53:50] Trying geocode for: 1567 Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-25 16:53:50] Making API request to: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:50] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:50] API Response: Code 200 - OK
+[2025-06-25 16:53:50] API returned 0 results
+[2025-06-25 16:53:50] No geocoding results found for address: 1567 Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-25 16:53:50] Trying geocode for: 1567 Grafton Street, Haliax, Nova Scotia
+[2025-06-25 16:53:51] Making API request to: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:51] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:52] API Response: Code 200 - OK
+[2025-06-25 16:53:52] API returned 0 results
+[2025-06-25 16:53:52] No geocoding results found for address: 1567 Grafton Street, Haliax, Nova Scotia
+[2025-06-25 16:53:52] All geocoding attempts failed for: street=1567 Grafton Street, city=Haliax, province=Nova Scotia
+[2025-06-25 16:53:52] Trying enhanced fallback strategies for: street='1567 Grafton Street', city='Haliax', province='ns'
+[2025-06-25 16:53:52] All geocoding attempts failed for: street=, city=Haliax, province=Nova Scotia
+[2025-06-25 16:53:52] All geocoding attempts failed for: street=, city=Haliax, province=
+[2025-06-25 16:53:52] All geocoding attempts failed for: street=, city=, province=Nova Scotia
+[2025-06-25 16:53:52] All enhanced fallback strategies failed
+[2025-06-25 16:53:52] Background geocoding: Failed to geocode address for user 618 (suffix: )
+[2025-06-25 16:53:53] Background processing user 619: street='Fall River Rd', city='Fall River', province='ns'
+[2025-06-25 16:53:53] Trying geocode for: Fall River Rd, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:53] Making API request to: https://nominatim.openstreetmap.org/search?q=Fall+River+Rd%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:53] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=Fall+River+Rd%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:54] API Response: Code 200 - OK
+[2025-06-25 16:53:54] API returned 1 results
+[2025-06-25 16:53:54] Geocoding successful: lat=44.8080393, lng=-63.6199608, display_name='Fall River Road, Tamarac Hills, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1E6, Canada', type='secondary'
+[2025-06-25 16:53:54] Successfully geocoded: Fall River Rd, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:54] Background geocoding: Successfully geocoded address for user 619 (suffix: )
+[2025-06-25 16:53:55] Background processing user 620: street='2-3290 Hwy 2', city='Fall River', province='ns'
+[2025-06-25 16:53:55] Trying geocode for: 2-3290 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:55] Making API request to: https://nominatim.openstreetmap.org/search?q=2-3290+Hwy+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:55] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=2-3290+Hwy+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:56] API Response: Code 200 - OK
+[2025-06-25 16:53:56] API returned 1 results
+[2025-06-25 16:53:56] Geocoding successful: lat=44.8173683, lng=-63.6101317, display_name='Pet Valu, 3290, Highway 2, Fall River Plaza, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1J5, Canada', type='pet'
+[2025-06-25 16:53:56] Successfully geocoded: 2-3290 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-25 16:53:56] Background geocoding: Successfully geocoded address for user 620 (suffix: )
+[2025-06-25 16:53:57] Background processing user 621: street='1160 Bedford Highway', city='Bedford', province='ns'
+[2025-06-25 16:53:57] Trying geocode for: 1160 Bedford Highway, Bedford, Nova Scotia, Canada
+[2025-06-25 16:53:57] Making API request to: https://nominatim.openstreetmap.org/search?q=1160+Bedford+Highway%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:57] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1160+Bedford+Highway%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:57] API Response: Code 200 - OK
+[2025-06-25 16:53:57] API returned 1 results
+[2025-06-25 16:53:57] Geocoding successful: lat=44.7217218, lng=-63.6718357, display_name='1160, Bedford Highway, Basinview, Bedford, Halifax Regional Municipality, Halifax County, Nova Scotia, B4A 1C1, Canada', type='yes'
+[2025-06-25 16:53:57] Successfully geocoded: 1160 Bedford Highway, Bedford, Nova Scotia, Canada
+[2025-06-25 16:53:58] Background geocoding: Successfully geocoded address for user 621 (suffix: )
+[2025-06-25 16:53:59] Background processing user 622: street='6112 Willow Street', city='Halifax', province='ns'
+[2025-06-25 16:53:59] Trying geocode for: 6112 Willow Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:53:59] Making API request to: https://nominatim.openstreetmap.org/search?q=6112+Willow+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:59] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=6112+Willow+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:53:59] API Response: Code 200 - OK
+[2025-06-25 16:53:59] API returned 1 results
+[2025-06-25 16:53:59] Geocoding successful: lat=44.6529255, lng=-63.5956369, display_name='6112, Willow Street, Downtown Halifax, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 1M2, Canada', type='house'
+[2025-06-25 16:53:59] Successfully geocoded: 6112 Willow Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:53:59] Background geocoding: Successfully geocoded address for user 622 (suffix: )
+[2025-06-25 16:54:00] Background processing user 623: street='33 Ochterloney St.', city='Dartmouth', province='ns'
+[2025-06-25 16:54:00] Trying geocode for: 33 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-25 16:54:00] Making API request to: https://nominatim.openstreetmap.org/search?q=33+Ochterloney+Street%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:00] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=33+Ochterloney+Street%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:01] API Response: Code 200 - OK
+[2025-06-25 16:54:01] API returned 1 results
+[2025-06-25 16:54:01] Geocoding successful: lat=44.6663207, lng=-63.5691825, display_name='Quaker Landing, 33, Ochterloney Street, Park Avenue, Downtown Dartmouth, Dartmouth, Halifax Regional Municipality, Halifax County, Nova Scotia, B2Y 2P5, Canada', type='office'
+[2025-06-25 16:54:01] Successfully geocoded: 33 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-25 16:54:01] Background geocoding: Successfully geocoded address for user 623 (suffix: )
+[2025-06-25 16:54:02] Background processing user 624: street='3667 Strawberry Hill Street', city='Halifax', province='ns'
+[2025-06-25 16:54:02] Trying geocode for: 3667 Strawberry Hill Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:54:02] Making API request to: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:02] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:03] API Response: Code 200 - OK
+[2025-06-25 16:54:03] API returned 1 results
+[2025-06-25 16:54:03] Geocoding successful: lat=44.6619829, lng=-63.6194088, display_name='3667, Strawberry Hill Street, Convoy Place, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 5A8, Canada', type='commercial'
+[2025-06-25 16:54:03] Successfully geocoded: 3667 Strawberry Hill Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:54:03] Background geocoding: Successfully geocoded address for user 624 (suffix: )
+[2025-06-25 16:54:04] Background processing user 626: street='3-850 Grand Lake Road', city='Sydney', province='ns'
+[2025-06-25 16:54:04] Trying geocode for: 3-850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-25 16:54:04] Making API request to: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:04] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:08] API Response: Code 200 - OK
+[2025-06-25 16:54:08] API returned 0 results
+[2025-06-25 16:54:08] No geocoding results found for address: 3-850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-25 16:54:08] Trying geocode for: 3-850 Grand Lake Road, Sydney, Nova Scotia
+[2025-06-25 16:54:08] Making API request to: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:08] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:10] API Response: Code 200 - OK
+[2025-06-25 16:54:10] API returned 0 results
+[2025-06-25 16:54:10] No geocoding results found for address: 3-850 Grand Lake Road, Sydney, Nova Scotia
+[2025-06-25 16:54:10] All geocoding attempts failed for: street=3-850 Grand Lake Road, city=Sydney, province=Nova Scotia
+[2025-06-25 16:54:10] Trying enhanced fallback strategies for: street='3-850 Grand Lake Road', city='Sydney', province='ns'
+[2025-06-25 16:54:10] All geocoding attempts failed for: street=, city=Sydney, province=Nova Scotia
+[2025-06-25 16:54:10] All geocoding attempts failed for: street=, city=Sydney, province=
+[2025-06-25 16:54:10] All geocoding attempts failed for: street=, city=, province=Nova Scotia
+[2025-06-25 16:54:10] All enhanced fallback strategies failed
+[2025-06-25 16:54:10] Background geocoding: Failed to geocode address for user 626 (suffix: )
+[2025-06-25 16:54:11] Background processing user 628: street='167 Highway 214, Suite 101', city='Elmsdale', province='ns'
+[2025-06-25 16:54:11] Trying geocode for: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:54:11] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:11] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:12] API Response: Code 200 - OK
+[2025-06-25 16:54:12] API returned 0 results
+[2025-06-25 16:54:12] No geocoding results found for address: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:54:12] Trying geocode for: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia
+[2025-06-25 16:54:12] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:12] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:13] API Response: Code 200 - OK
+[2025-06-25 16:54:13] API returned 0 results
+[2025-06-25 16:54:13] No geocoding results found for address: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia
+[2025-06-25 16:54:13] Trying geocode for: 167 Highway 214, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:54:13] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:13] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:14] API Response: Code 200 - OK
+[2025-06-25 16:54:14] API returned 1 results
+[2025-06-25 16:54:14] Geocoding successful: lat=44.9696227, lng=-63.5052458, display_name='167, Highway 214, Elmsdale, East Hants District Municipality, Hants County, Nova Scotia, B2S 1H7, Canada', type='house'
+[2025-06-25 16:54:14] Successfully geocoded: 167 Highway 214, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:54:14] Background geocoding: Successfully geocoded address for user 628 (suffix: _2)
+[2025-06-25 16:54:15] Background processing user 637: street='521 Robert St', city='Fall River', province='ns'
+[2025-06-25 16:54:15] Trying geocode for: 521 Robert St, Fall River, Nova Scotia, Canada
+[2025-06-25 16:54:15] Making API request to: https://nominatim.openstreetmap.org/search?q=521+Robert+St%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:15] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=521+Robert+St%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:16] API Response: Code 200 - OK
+[2025-06-25 16:54:16] API returned 1 results
+[2025-06-25 16:54:16] Geocoding successful: lat=44.8247449, lng=-63.5993687, display_name='521, Robert Street, Schwarzwald Heights, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 0E1, Canada', type='yes'
+[2025-06-25 16:54:16] Successfully geocoded: 521 Robert St, Fall River, Nova Scotia, Canada
+[2025-06-25 16:54:16] Background geocoding: Successfully geocoded address for user 637 (suffix: _2)
+[2025-06-25 16:54:20] Processing geocoding batch...
+[2025-06-25 16:54:20] Background processing user 618: street='1567 Grafton Street', city='Haliax', province='ns'
+[2025-06-25 16:54:20] Trying geocode for: 1567 Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-25 16:54:20] Making API request to: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:20] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:20] API Response: Code 200 - OK
+[2025-06-25 16:54:20] API returned 0 results
+[2025-06-25 16:54:20] No geocoding results found for address: 1567 Grafton Street, Haliax, Nova Scotia, Canada
+[2025-06-25 16:54:20] Trying geocode for: 1567 Grafton Street, Haliax, Nova Scotia
+[2025-06-25 16:54:21] Making API request to: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:21] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1567+Grafton+Street%2C+Haliax%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:22] API Response: Code 200 - OK
+[2025-06-25 16:54:22] API returned 0 results
+[2025-06-25 16:54:22] No geocoding results found for address: 1567 Grafton Street, Haliax, Nova Scotia
+[2025-06-25 16:54:22] All geocoding attempts failed for: street=1567 Grafton Street, city=Haliax, province=Nova Scotia
+[2025-06-25 16:54:22] Trying enhanced fallback strategies for: street='1567 Grafton Street', city='Haliax', province='ns'
+[2025-06-25 16:54:22] All geocoding attempts failed for: street=, city=Haliax, province=Nova Scotia
+[2025-06-25 16:54:22] All geocoding attempts failed for: street=, city=Haliax, province=
+[2025-06-25 16:54:22] All geocoding attempts failed for: street=, city=, province=Nova Scotia
+[2025-06-25 16:54:22] All enhanced fallback strategies failed
+[2025-06-25 16:54:22] Background geocoding: Failed to geocode address for user 618 (suffix: )
+[2025-06-25 16:54:23] Background processing user 619: street='Fall River Rd', city='Fall River', province='ns'
+[2025-06-25 16:54:23] Trying geocode for: Fall River Rd, Fall River, Nova Scotia, Canada
+[2025-06-25 16:54:23] Making API request to: https://nominatim.openstreetmap.org/search?q=Fall+River+Rd%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:23] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=Fall+River+Rd%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:24] API Response: Code 200 - OK
+[2025-06-25 16:54:24] API returned 1 results
+[2025-06-25 16:54:24] Geocoding successful: lat=44.8080393, lng=-63.6199608, display_name='Fall River Road, Tamarac Hills, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1E6, Canada', type='secondary'
+[2025-06-25 16:54:24] Successfully geocoded: Fall River Rd, Fall River, Nova Scotia, Canada
+[2025-06-25 16:54:24] Background geocoding: Successfully geocoded address for user 619 (suffix: )
+[2025-06-25 16:54:25] Background processing user 620: street='2-3290 Hwy 2', city='Fall River', province='ns'
+[2025-06-25 16:54:25] Trying geocode for: 2-3290 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-25 16:54:25] Making API request to: https://nominatim.openstreetmap.org/search?q=2-3290+Hwy+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:25] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=2-3290+Hwy+2%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:26] API Response: Code 200 - OK
+[2025-06-25 16:54:26] API returned 1 results
+[2025-06-25 16:54:26] Geocoding successful: lat=44.8173683, lng=-63.6101317, display_name='Pet Valu, 3290, Highway 2, Fall River Plaza, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 1J5, Canada', type='pet'
+[2025-06-25 16:54:26] Successfully geocoded: 2-3290 Hwy 2, Fall River, Nova Scotia, Canada
+[2025-06-25 16:54:26] Background geocoding: Successfully geocoded address for user 620 (suffix: )
+[2025-06-25 16:54:27] Background processing user 621: street='1160 Bedford Highway', city='Bedford', province='ns'
+[2025-06-25 16:54:27] Trying geocode for: 1160 Bedford Highway, Bedford, Nova Scotia, Canada
+[2025-06-25 16:54:27] Making API request to: https://nominatim.openstreetmap.org/search?q=1160+Bedford+Highway%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:27] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=1160+Bedford+Highway%2C+Bedford%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:27] API Response: Code 200 - OK
+[2025-06-25 16:54:27] API returned 1 results
+[2025-06-25 16:54:27] Geocoding successful: lat=44.7217218, lng=-63.6718357, display_name='1160, Bedford Highway, Basinview, Bedford, Halifax Regional Municipality, Halifax County, Nova Scotia, B4A 1C1, Canada', type='yes'
+[2025-06-25 16:54:27] Successfully geocoded: 1160 Bedford Highway, Bedford, Nova Scotia, Canada
+[2025-06-25 16:54:27] Background geocoding: Successfully geocoded address for user 621 (suffix: )
+[2025-06-25 16:54:28] Background processing user 622: street='6112 Willow Street', city='Halifax', province='ns'
+[2025-06-25 16:54:28] Trying geocode for: 6112 Willow Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:54:28] Making API request to: https://nominatim.openstreetmap.org/search?q=6112+Willow+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:28] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=6112+Willow+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:30] API Response: Code 200 - OK
+[2025-06-25 16:54:30] API returned 1 results
+[2025-06-25 16:54:30] Geocoding successful: lat=44.6529255, lng=-63.5956369, display_name='6112, Willow Street, Downtown Halifax, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 1M2, Canada', type='house'
+[2025-06-25 16:54:30] Successfully geocoded: 6112 Willow Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:54:30] Background geocoding: Successfully geocoded address for user 622 (suffix: )
+[2025-06-25 16:54:31] Background processing user 623: street='33 Ochterloney St.', city='Dartmouth', province='ns'
+[2025-06-25 16:54:31] Trying geocode for: 33 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-25 16:54:31] Making API request to: https://nominatim.openstreetmap.org/search?q=33+Ochterloney+Street%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:31] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=33+Ochterloney+Street%2C+Dartmouth%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:32] API Response: Code 200 - OK
+[2025-06-25 16:54:32] API returned 1 results
+[2025-06-25 16:54:32] Geocoding successful: lat=44.6663207, lng=-63.5691825, display_name='Quaker Landing, 33, Ochterloney Street, Park Avenue, Downtown Dartmouth, Dartmouth, Halifax Regional Municipality, Halifax County, Nova Scotia, B2Y 2P5, Canada', type='office'
+[2025-06-25 16:54:32] Successfully geocoded: 33 Ochterloney Street, Dartmouth, Nova Scotia, Canada
+[2025-06-25 16:54:32] Background geocoding: Successfully geocoded address for user 623 (suffix: )
+[2025-06-25 16:54:33] Background processing user 624: street='3667 Strawberry Hill Street', city='Halifax', province='ns'
+[2025-06-25 16:54:33] Trying geocode for: 3667 Strawberry Hill Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:54:33] Making API request to: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:33] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3667+Strawberry+Hill+Street%2C+Halifax%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:34] API Response: Code 200 - OK
+[2025-06-25 16:54:34] API returned 1 results
+[2025-06-25 16:54:34] Geocoding successful: lat=44.6619829, lng=-63.6194088, display_name='3667, Strawberry Hill Street, Convoy Place, Halifax, Halifax Regional Municipality, Halifax County, Nova Scotia, B3K 5A8, Canada', type='commercial'
+[2025-06-25 16:54:34] Successfully geocoded: 3667 Strawberry Hill Street, Halifax, Nova Scotia, Canada
+[2025-06-25 16:54:34] Background geocoding: Successfully geocoded address for user 624 (suffix: )
+[2025-06-25 16:54:35] Background processing user 626: street='3-850 Grand Lake Road', city='Sydney', province='ns'
+[2025-06-25 16:54:35] Trying geocode for: 3-850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-25 16:54:35] Making API request to: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:35] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:37] API Response: Code 200 - OK
+[2025-06-25 16:54:37] API returned 0 results
+[2025-06-25 16:54:37] No geocoding results found for address: 3-850 Grand Lake Road, Sydney, Nova Scotia, Canada
+[2025-06-25 16:54:37] Trying geocode for: 3-850 Grand Lake Road, Sydney, Nova Scotia
+[2025-06-25 16:54:37] Making API request to: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:37] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=3-850+Grand+Lake+Road%2C+Sydney%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:39] API Response: Code 200 - OK
+[2025-06-25 16:54:39] API returned 0 results
+[2025-06-25 16:54:39] No geocoding results found for address: 3-850 Grand Lake Road, Sydney, Nova Scotia
+[2025-06-25 16:54:39] All geocoding attempts failed for: street=3-850 Grand Lake Road, city=Sydney, province=Nova Scotia
+[2025-06-25 16:54:39] Trying enhanced fallback strategies for: street='3-850 Grand Lake Road', city='Sydney', province='ns'
+[2025-06-25 16:54:39] All geocoding attempts failed for: street=, city=Sydney, province=Nova Scotia
+[2025-06-25 16:54:39] All geocoding attempts failed for: street=, city=Sydney, province=
+[2025-06-25 16:54:39] All geocoding attempts failed for: street=, city=, province=Nova Scotia
+[2025-06-25 16:54:39] All enhanced fallback strategies failed
+[2025-06-25 16:54:39] Background geocoding: Failed to geocode address for user 626 (suffix: )
+[2025-06-25 16:54:40] Background processing user 628: street='167 Highway 214, Suite 101', city='Elmsdale', province='ns'
+[2025-06-25 16:54:40] Trying geocode for: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:54:40] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:40] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:41] API Response: Code 200 - OK
+[2025-06-25 16:54:41] API returned 0 results
+[2025-06-25 16:54:41] No geocoding results found for address: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:54:41] Trying geocode for: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia
+[2025-06-25 16:54:41] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:41] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Suite+101%2C+Elmsdale%2C+Nova+Scotia&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:43] API Response: Code 200 - OK
+[2025-06-25 16:54:43] API returned 0 results
+[2025-06-25 16:54:43] No geocoding results found for address: 167 Highway 214, Suite 101, Elmsdale, Nova Scotia
+[2025-06-25 16:54:43] Trying geocode for: 167 Highway 214, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:54:43] Making API request to: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:43] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=167+Highway+214%2C+Elmsdale%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:43] API Response: Code 200 - OK
+[2025-06-25 16:54:43] API returned 1 results
+[2025-06-25 16:54:43] Geocoding successful: lat=44.9696227, lng=-63.5052458, display_name='167, Highway 214, Elmsdale, East Hants District Municipality, Hants County, Nova Scotia, B2S 1H7, Canada', type='house'
+[2025-06-25 16:54:43] Successfully geocoded: 167 Highway 214, Elmsdale, Nova Scotia, Canada
+[2025-06-25 16:54:43] Background geocoding: Successfully geocoded address for user 628 (suffix: _2)
+[2025-06-25 16:54:44] Background processing user 637: street='521 Robert St', city='Fall River', province='ns'
+[2025-06-25 16:54:44] Trying geocode for: 521 Robert St, Fall River, Nova Scotia, Canada
+[2025-06-25 16:54:44] Making API request to: https://nominatim.openstreetmap.org/search?q=521+Robert+St%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:44] Geocoding GET request: https://nominatim.openstreetmap.org/search?q=521+Robert+St%2C+Fall+River%2C+Nova+Scotia%2C+Canada&format=json&limit=1&countrycodes=ca
+[2025-06-25 16:54:45] API Response: Code 200 - OK
+[2025-06-25 16:54:45] API returned 1 results
+[2025-06-25 16:54:45] Geocoding successful: lat=44.8247449, lng=-63.5993687, display_name='521, Robert Street, Schwarzwald Heights, Fall River, Halifax Regional Municipality, Halifax County, Nova Scotia, B2T 0E1, Canada', type='yes'
+[2025-06-25 16:54:45] Successfully geocoded: 521 Robert St, Fall River, Nova Scotia, Canada
+[2025-06-25 16:54:45] Background geocoding: Successfully geocoded address for user 637 (suffix: _2)

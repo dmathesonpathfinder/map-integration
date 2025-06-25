@@ -12,9 +12,11 @@
         // Configuration
         config: {
             searchDelay: 300, // ms to wait after typing before searching
-            minSearchLength: 2, // minimum characters before starting search
+            minSearchLength: 3, // minimum characters before starting search
             highlightClass: 'search-highlight',
-            noResultsClass: 'no-results'
+            noResultsClass: 'no-results',
+            minMatchScore: 2, // minimum score required to show result
+            exactMatchBonus: 3 // bonus points for exact matches
         },
 
         // State
@@ -32,7 +34,6 @@
         // Cache DOM elements
         cacheElements: function() {
             this.$searchInput = $('#chiro-search-input');
-            this.$searchSubmit = $('#chiro-search-submit');
             this.$searchClear = $('#chiro-search-clear');
             this.$listingsContainer = $('.chiro-listings-grid');
             this.$listings = $('.chiro-listing');
@@ -49,12 +50,6 @@
                 self.searchTimeout = setTimeout(function() {
                     self.performSearch();
                 }, self.config.searchDelay);
-            });
-
-            // Search submit button
-            this.$searchSubmit.on('click', function(e) {
-                e.preventDefault();
-                self.performSearch();
             });
 
             // Clear search button
@@ -187,47 +182,91 @@
         // Prepare search terms for highlighting
         prepareSearchTerms: function(query) {
             return query.toLowerCase().split(/\s+/).filter(function(term) {
-                return term.length >= 1;
+                return term.length >= 3; // Only highlight terms with 3+ characters
             });
         },
 
-        // Fuzzy matching algorithm
+        // Fuzzy matching algorithm - improved for better precision
         fuzzyMatch: function(text, query) {
             if (!query) return true;
             
-            var queryTerms = query.toLowerCase().split(/\s+/);
-            var matches = 0;
+            var queryTerms = query.toLowerCase().split(/\s+/).filter(function(term) {
+                return term.length > 0;
+            });
+            
+            var totalScore = 0;
+            var requiredMatches = 0;
 
             queryTerms.forEach(function(term) {
                 if (term.length === 0) return;
                 
-                // Exact match gets highest priority
-                if (text.indexOf(term) !== -1) {
-                    matches += 2;
+                var termScore = 0;
+                var termMatched = false;
+                
+                // Exact word match gets highest priority
+                var exactWordRegex = new RegExp('\\b' + this.escapeRegex(term) + '\\b', 'i');
+                if (exactWordRegex.test(text)) {
+                    termScore += this.config.exactMatchBonus;
+                    termMatched = true;
                 }
-                // Partial match (character-by-character fuzzy)
-                else if (this.partialFuzzyMatch(text, term)) {
-                    matches += 1;
+                // Exact substring match gets high priority
+                else if (text.indexOf(term) !== -1) {
+                    termScore += 2;
+                    termMatched = true;
                 }
+                // Partial fuzzy match (but only for terms 3+ characters)
+                else if (term.length >= 3 && this.partialFuzzyMatch(text, term)) {
+                    // Only give partial credit and require longer match
+                    var matchRatio = this.calculateMatchRatio(text, term);
+                    if (matchRatio >= 0.7) { // Require 70% character match
+                        termScore += 1;
+                        termMatched = true;
+                    }
+                }
+                
+                if (termMatched) {
+                    requiredMatches++;
+                }
+                
+                totalScore += termScore;
             }.bind(this));
 
-            // Require at least one match for any term
-            return matches > 0;
+            // Require ALL terms to have at least some match AND minimum total score
+            return requiredMatches === queryTerms.length && totalScore >= this.config.minMatchScore;
         },
 
-        // Partial fuzzy matching for individual terms
+        // Partial fuzzy matching for individual terms - more strict
         partialFuzzyMatch: function(text, term) {
             var termIndex = 0;
             var textIndex = 0;
+            var matchedChars = 0;
             
             while (termIndex < term.length && textIndex < text.length) {
                 if (term[termIndex] === text[textIndex]) {
                     termIndex++;
+                    matchedChars++;
                 }
                 textIndex++;
             }
             
-            return termIndex === term.length;
+            // Require at least 80% of characters to match in sequence
+            var matchRatio = matchedChars / term.length;
+            return termIndex === term.length && matchRatio >= 0.8;
+        },
+
+        // Calculate how well the term matches within the text
+        calculateMatchRatio: function(text, term) {
+            var termIndex = 0;
+            var matchedChars = 0;
+            
+            for (var i = 0; i < text.length && termIndex < term.length; i++) {
+                if (text[i] === term[termIndex]) {
+                    matchedChars++;
+                    termIndex++;
+                }
+            }
+            
+            return matchedChars / term.length;
         },
 
         // Highlight matching terms in listings
@@ -248,9 +287,16 @@
                 var highlightedText = text;
                 
                 terms.forEach(function(term) {
-                    if (term.length >= 2) { // Only highlight terms with 2+ characters
-                        var regex = new RegExp('(' + self.escapeRegex(term) + ')', 'gi');
-                        highlightedText = highlightedText.replace(regex, '<span class="' + self.config.highlightClass + '">$1</span>');
+                    if (term.length >= 3) { // Only highlight terms with 3+ characters
+                        // Try exact word match first
+                        var wordRegex = new RegExp('(\\b' + self.escapeRegex(term) + '\\b)', 'gi');
+                        if (wordRegex.test(text)) {
+                            highlightedText = highlightedText.replace(wordRegex, '<span class="' + self.config.highlightClass + '">$1</span>');
+                        } else {
+                            // Fall back to substring match
+                            var regex = new RegExp('(' + self.escapeRegex(term) + ')', 'gi');
+                            highlightedText = highlightedText.replace(regex, '<span class="' + self.config.highlightClass + '">$1</span>');
+                        }
                     }
                 });
                 

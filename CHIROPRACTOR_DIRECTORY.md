@@ -13,11 +13,12 @@ The Map Integration plugin now includes a comprehensive chiropractor directory f
 - Minimum 2 characters required for search activation
 
 ### 🗺️ **Map Integration**
-- Clickable links on chiropractor names and clinic locations
-- "View on Map" buttons for each location with coordinates
+- Clickable chiropractor names center the map on their first location with coordinates
+- **Entire location items are clickable** - click anywhere on a location card to center the map
 - Automatically centers the map on selected locations
 - Smooth scrolling and animation to map section
 - Compatible with existing map shortcodes
+- Visual indicators show which locations are clickable (hover effects and map icons)
 
 ### 🎨 **Enhanced Styling**
 - Modern, responsive design similar to Dynamic User Directory
