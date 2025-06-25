@@ -291,10 +291,31 @@ class MapGeocoder
         $lat_key = 'mepr_clinic_lat' . $suffix;
         $lng_key = 'mepr_clinic_lng' . $suffix;
         $time_key = 'mepr_clinic_geocoded_at' . $suffix;
+        $confidence_key = 'mepr_clinic_geo_confidence' . $suffix;
+        $fallback_key = 'mepr_clinic_geo_fallback' . $suffix;
 
-        update_user_meta($user_id, $lat_key, $coordinates['lat']);
-        update_user_meta($user_id, $lng_key, $coordinates['lng']);
+        // Handle both old format (lat/lng) and new format (latitude/longitude)
+        $lat = isset($coordinates['lat']) ? $coordinates['lat'] : 
+               (isset($coordinates['latitude']) ? $coordinates['latitude'] : null);
+        $lng = isset($coordinates['lng']) ? $coordinates['lng'] : 
+               (isset($coordinates['longitude']) ? $coordinates['longitude'] : null);
+
+        if ($lat === null || $lng === null) {
+            return false;
+        }
+
+        update_user_meta($user_id, $lat_key, $lat);
+        update_user_meta($user_id, $lng_key, $lng);
         update_user_meta($user_id, $time_key, current_time('mysql'));
+        
+        // Save additional metadata if available
+        if (isset($coordinates['confidence_score'])) {
+            update_user_meta($user_id, $confidence_key, $coordinates['confidence_score']);
+        }
+        
+        if (isset($coordinates['fallback_used'])) {
+            update_user_meta($user_id, $fallback_key, $coordinates['fallback_used']);
+        }
 
         return true;
     }
@@ -306,6 +327,9 @@ class MapGeocoder
     {
         $lat_key = 'mepr_clinic_lat' . $suffix;
         $lng_key = 'mepr_clinic_lng' . $suffix;
+        $confidence_key = 'mepr_clinic_geo_confidence' . $suffix;
+        $fallback_key = 'mepr_clinic_geo_fallback' . $suffix;
+        $time_key = 'mepr_clinic_geocoded_at' . $suffix;
 
         $lat = get_user_meta($user_id, $lat_key, true);
         $lng = get_user_meta($user_id, $lng_key, true);
@@ -314,10 +338,30 @@ class MapGeocoder
             return false;
         }
 
-        return array(
+        $result = array(
             'lat' => floatval($lat),
-            'lng' => floatval($lng)
+            'lng' => floatval($lng),
+            'latitude' => floatval($lat),
+            'longitude' => floatval($lng)
         );
+        
+        // Add additional metadata if available
+        $confidence = get_user_meta($user_id, $confidence_key, true);
+        if (!empty($confidence)) {
+            $result['confidence_score'] = intval($confidence);
+        }
+        
+        $fallback = get_user_meta($user_id, $fallback_key, true);
+        if (!empty($fallback)) {
+            $result['fallback_used'] = $fallback;
+        }
+        
+        $geocoded_at = get_user_meta($user_id, $time_key, true);
+        if (!empty($geocoded_at)) {
+            $result['geocoded_at'] = $geocoded_at;
+        }
+
+        return $result;
     }
 
     /**
@@ -361,9 +405,6 @@ class MapIntegration
     {
         // Add shortcode for displaying maps
         add_shortcode('map_integration', array($this, 'display_map_shortcode'));
-        
-        // Add shortcode for displaying chiropractor locations list
-        add_shortcode('chiropractor_locations', array($this, 'display_chiropractor_list_shortcode'));
 
         // Add admin menu
         add_action('admin_menu', array($this, 'add_admin_menu'));
@@ -373,6 +414,14 @@ class MapIntegration
 
         // Hook into user meta updates to trigger geocoding
         add_action('updated_user_meta', array($this, 'handle_user_meta_update'), 10, 4);
+        
+        // Add AJAX handlers for bulk geocoding control
+        add_action('wp_ajax_start_bulk_geocoding', array($this, 'ajax_start_bulk_geocoding'));
+        add_action('wp_ajax_stop_bulk_geocoding', array($this, 'ajax_stop_bulk_geocoding'));
+        add_action('wp_ajax_get_bulk_geocoding_status', array($this, 'ajax_get_bulk_geocoding_status'));
+        
+        // Add scheduled event handler for background processing
+        add_action('process_geocoding_batch', array($this, 'process_geocoding_batch'));
     }
 
     /**
@@ -430,6 +479,14 @@ class MapIntegration
             update_option('map_integration_google_api_key', $google_api_key);
             echo '<div class="notice notice-success"><p>Settings saved successfully.</p></div>';
         }
+        
+        // Enqueue admin scripts for AJAX functionality
+        wp_enqueue_script('jquery');
+        wp_localize_script('jquery', 'mapIntegrationAjax', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('bulk_geocoding_control')
+        ));
+        
         
         // Handle bulk geocoding action
         if (isset($_POST['bulk_geocode']) && wp_verify_nonce($_POST['_wpnonce'], 'bulk_geocode_action')) {
@@ -531,13 +588,156 @@ class MapIntegration
                 <p>All addresses have been geocoded.</p>
             <?php endif; ?>
 
-            <h2>Bulk Geocoding</h2>
-            <p>Geocode all existing clinic addresses that don't have coordinates yet.</p>
+            <h2>Interactive Bulk Geocoding</h2>
+            <p>Geocode all existing clinic addresses that don't have coordinates yet. This process can be started, stopped, and monitored in real-time.</p>
+            
+            <div id="bulk-geocoding-controls">
+                <button id="start-geocoding" class="button button-primary">Start Bulk Geocoding</button>
+                <button id="stop-geocoding" class="button" disabled>Stop Geocoding</button>
+                <button id="refresh-status" class="button">Refresh Status</button>
+            </div>
+            
+            <div id="geocoding-status" style="margin-top: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
+                <h4>Status: <span id="status-indicator">Not running</span></h4>
+                <div id="progress-info">
+                    <p><strong>Processed:</strong> <span id="processed-count">0</span></p>
+                    <p><strong>Successful:</strong> <span id="success-count">0</span></p>
+                    <p><strong>Failed:</strong> <span id="failed-count">0</span></p>
+                    <p><strong>Current:</strong> <span id="progress-message">Ready to start</span></p>
+                </div>
+            </div>
+            
+            <script>
+            jQuery(document).ready(function($) {
+                var geocodingNonce = '<?php echo wp_create_nonce('bulk_geocoding_control'); ?>';
+                var statusCheckInterval;
+                var errorCount = 0;
+                
+                // Start geocoding
+                $('#start-geocoding').click(function() {
+                    var button = $(this);
+                    button.prop('disabled', true).text('Starting...');
+                    
+                    $.post(ajaxurl, {
+                        action: 'start_bulk_geocoding',
+                        nonce: geocodingNonce
+                    }, function(response) {
+                        if (response.success) {
+                            $('#stop-geocoding').prop('disabled', false);
+                            $('#status-indicator').text('Starting...');
+                            startStatusUpdates();
+                            button.text('Start Bulk Geocoding');
+                        } else {
+                            alert('Error: ' + response.data);
+                            button.prop('disabled', false).text('Start Bulk Geocoding');
+                        }
+                    }).fail(function() {
+                        alert('Network error occurred. Please try again.');
+                        button.prop('disabled', false).text('Start Bulk Geocoding');
+                    });
+                });
+                
+                // Stop geocoding
+                $('#stop-geocoding').click(function() {
+                    if (!confirm('Are you sure you want to stop the geocoding process?')) {
+                        return;
+                    }
+                    
+                    var button = $(this);
+                    button.prop('disabled', true).text('Stopping...');
+                    
+                    $.post(ajaxurl, {
+                        action: 'stop_bulk_geocoding',
+                        nonce: geocodingNonce
+                    }, function(response) {
+                        if (response.success) {
+                            $('#start-geocoding').prop('disabled', false);
+                            stopStatusUpdates();
+                            button.text('Stop Geocoding');
+                        } else {
+                            alert('Error: ' + response.data);
+                            button.prop('disabled', false).text('Stop Geocoding');
+                        }
+                    }).fail(function() {
+                        alert('Network error occurred. Please try again.');
+                        button.prop('disabled', false).text('Stop Geocoding');
+                    });
+                });
+                
+                // Refresh status
+                $('#refresh-status').click(function() {
+                    updateStatus();
+                });
+                
+                // Update status function
+                function updateStatus() {
+                    $.post(ajaxurl, {
+                        action: 'get_bulk_geocoding_status',
+                        nonce: geocodingNonce
+                    }, function(response) {
+                        if (response.success) {
+                            var status = response.data;
+                            $('#status-indicator').text(status.running ? 'Running' : 'Not running');
+                            $('#processed-count').text(status.total_processed || 0);
+                            $('#success-count').text(status.total_success || 0);
+                            $('#failed-count').text(status.total_failed || 0);
+                            $('#progress-message').text(status.progress_message || 'Ready');
+                            
+                            // Update button states
+                            $('#start-geocoding').prop('disabled', status.running);
+                            $('#stop-geocoding').prop('disabled', !status.running);
+                            
+                            // Auto-stop status updates if not running
+                            if (!status.running && statusCheckInterval) {
+                                stopStatusUpdates();
+                            }
+                            
+                            // Reset error count on successful update
+                            errorCount = 0;
+                        } else {
+                            console.error('Status update error:', response.data);
+                            errorCount++;
+                            if (errorCount > 3) {
+                                stopStatusUpdates();
+                                $('#progress-message').text('Error getting status - stopped monitoring');
+                            }
+                        }
+                    }).fail(function() {
+                        console.error('Network error during status update');
+                        errorCount++;
+                        if (errorCount > 3) {
+                            stopStatusUpdates();
+                            $('#progress-message').text('Network error - stopped monitoring');
+                        }
+                    });
+                }
+                
+                // Start status updates
+                function startStatusUpdates() {
+                    updateStatus();
+                    statusCheckInterval = setInterval(updateStatus, 3000); // Update every 3 seconds
+                }
+                
+                // Stop status updates
+                function stopStatusUpdates() {
+                    if (statusCheckInterval) {
+                        clearInterval(statusCheckInterval);
+                        statusCheckInterval = null;
+                    }
+                }
+                
+                // Initial status check
+                updateStatus();
+            });
+            </script>
+            
+            <h3>Legacy Bulk Geocoding</h3>
+            <p><em>For one-time batch processing (old method):</em></p>
             <form method="post" action="">
                 <?php wp_nonce_field('bulk_geocode_action'); ?>
-                <input type="submit" name="bulk_geocode" class="button button-primary" value="Run Bulk Geocoding"
-                    onclick="return confirm('This may take a while. Continue?');">
-                <p><em>Note: This respects Nominatim's rate limits (1 request per second).</em></p>
+                <input type="submit" name="bulk_geocode" class="button button-secondary" value="Run Legacy Bulk Geocoding"
+                    onclick="return confirm('This may take a while and cannot be interrupted. Use the Interactive Bulk Geocoding above instead. Continue?');">
+                <p><em>Note: This is the old method that respects batch limits and cannot be interrupted.</em></p>
             </form>
 
             <h2>Clear Geocoding Data</h2>
@@ -552,29 +752,15 @@ class MapIntegration
             <p>The plugin automatically geocodes clinic addresses when they are updated.</p>
 
             <h3>Map Shortcodes</h3>
-            <p>Use these shortcodes to display maps:</p>
+            <p>Use these shortcodes to display maps and listings:</p>
             <ul>
                 <li><code>[map_integration]</code> - Display all clinic locations on an interactive map</li>
+                <li><code>[map_integration show_listings="true"]</code> - Display clinic listings only</li>
+                <li><code>[map_integration show_listings="true" show_clinics="true"]</code> - Display both listings and map</li>
                 <li><code>[map_integration width="800px" height="500px"]</code> - Custom size map</li>
                 <li><code>[map_integration center_lat="44.6488" center_lng="-63.5752" zoom="8"]</code> - Custom center and zoom</li>
                 <li><code>[map_integration show_clinics="false" location="Custom Location"]</code> - Legacy placeholder map</li>
             </ul>
-
-            <h3>Chiropractor List Shortcode</h3>
-            <p>Use this shortcode to display a list of all chiropractor locations:</p>
-            <ul>
-                <li><code>[chiropractor_locations]</code> - Display all chiropractor locations with full details, search, and sort</li>
-                <li><code>[chiropractor_locations show_search="false"]</code> - Hide the search functionality</li>
-                <li><code>[chiropractor_locations show_sort="false"]</code> - Hide the sort dropdown</li>
-                <li><code>[chiropractor_locations default_sort="city"]</code> - Set default sort order (name, clinic, city, province, map_status)</li>
-                <li><code>[chiropractor_locations show_phone="false"]</code> - Hide phone numbers</li>
-                <li><code>[chiropractor_locations show_email="false"]</code> - Hide email addresses</li>
-                <li><code>[chiropractor_locations show_website="false"]</code> - Hide website links</li>
-                <li><code>[chiropractor_locations show_coordinates="true"]</code> - Show latitude/longitude coordinates</li>
-                <li><code>[chiropractor_locations user_role="subscriber"]</code> - Filter by user role</li>
-            </ul>
-            <p><strong>Search Features:</strong> The list includes intelligent fuzzy search that matches chiropractor names, clinic names, cities, addresses, and contact information. It handles typos and partial matches automatically.</p>
-            <p><strong>Sort Options:</strong> Choose from multiple sort orders including chiropractor name, clinic name, city, province, or map status (locations with/without coordinates). Both ascending and descending orders are available.</p>
 
             <h3>Data Storage</h3>
             <p>Coordinates are stored in user meta fields:</p>
@@ -641,15 +827,24 @@ class MapIntegration
             'height' => '400px',
             'location' => 'Halifax, NS',
             'show_clinics' => 'true',
+            'show_listings' => 'false',
             'center_lat' => '44.6488', // Default to Nova Scotia
             'center_lng' => '-63.5752',
             'zoom' => '7',
             'user_role' => 'subscriber' // Default to subscribers only
         ), $atts);
 
+        $output = '';
+        
+        // Show listings if requested
+        if ($atts['show_listings'] === 'true') {
+            $output .= $this->display_clinic_listings($atts);
+        }
+        
+        // Show map if requested
         if ($atts['show_clinics'] === 'true') {
-            return $this->display_clinic_map($atts);
-        } else {
+            $output .= $this->display_clinic_map($atts);
+        } else if ($atts['show_listings'] !== 'true') {
             // Legacy placeholder map
             $output = '<div class="map-integration-container" style="width: ' . esc_attr($atts['width']) . '; height: ' . esc_attr($atts['height']) . ';">';
             $output .= '<div class="map-placeholder">';
@@ -658,8 +853,9 @@ class MapIntegration
             $output .= '<p><em>Connect your preferred map service API to display interactive maps here.</em></p>';
             $output .= '</div>';
             $output .= '</div>';
-            return $output;
         }
+        
+        return $output;
     }
     /**
      * Display interactive clinic map with Leaflet.js
@@ -677,7 +873,7 @@ class MapIntegration
 
         // Create map HTML
         $output = '<div id="' . esc_attr($map_id) . '" class="map-integration-leaflet" style="width: ' . esc_attr($atts['width']) . '; height: ' . esc_attr($atts['height']) . ';"></div>';
-        $output .= "<script type=\"text/javascript\">\n        document.addEventListener(\"DOMContentLoaded\", function() {\n            function initializeMap() {\n                if (typeof L === \"undefined\" || typeof L.Control === \"undefined\") {\n                    setTimeout(initializeMap, 100);\n                    return;\n                }\n                try {\n                    var map = L.map(\"" . esc_js($map_id) . "\").setView([" . floatval($atts['center_lat']) . ", " . floatval($atts['center_lng']) . "], " . intval($atts['zoom']) . ");\n                    \n                    // Store map reference globally for search functionality\n                    window.currentMap = map;\n                    \n                    var tileLayer = L.tileLayer(\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\", {\n                        attribution: \"&copy; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap</a> contributors\",\n                        maxZoom: 18\n                    });\n                    tileLayer.addTo(map);\n                    var clinics = " . json_encode($clinic_data) . ";\n                    var bounds = [];\n                    var markers = [];\n                    \n                    console.log('Creating', clinics.length, 'markers');\n                    \n                    clinics.forEach(function(clinic, index) {\n                        if (clinic.lat && clinic.lng) {\n                            var marker = L.marker([clinic.lat, clinic.lng]).addTo(map);\n                            marker.bindPopup((clinic.name ? '<h4>' + clinic.name + '</h4>' : '') +\n                                (clinic.address ? '<p>' + clinic.address + '</p>' : '') +\n                                (clinic.phone ? '<p>Phone: ' + clinic.phone + '</p>' : '') +\n                                (clinic.email ? '<p>Email: ' + clinic.email + '</p>' : '') +\n                                (clinic.website ? '<p><a href=\"' + clinic.website + '\" target=\"_blank\">Website</a></p>' : ''));\n                            marker.clinicName = clinic.name || '';\n                            markers.push(marker);\n                            bounds.push([clinic.lat, clinic.lng]);\n                        }\n                    });\n                    \n                    console.log('Created', markers.length, 'markers with clinic names:', markers.map(function(m) { return m.clinicName; }));\n                    \n                    // Store markers globally for immediate access\n                    window.allMapMarkersForSync = markers;\n                    \n                    // Register markers with search functionality (call immediately and set up for later calls)\n                    if (typeof window.registerMapMarkers === 'function') {\n                        console.log('Registering markers immediately');\n                        window.registerMapMarkers(markers);\n                    } else {\n                        console.log('registerMapMarkers function not available yet, storing markers for later');\n                        // Set up a timer to try registration later\n                        var registrationAttempts = 0;\n                        var registrationTimer = setInterval(function() {\n                            if (typeof window.registerMapMarkers === 'function') {\n                                console.log('Registering markers after delay');\n                                window.registerMapMarkers(markers);\n                                clearInterval(registrationTimer);\n                            } else {\n                                registrationAttempts++;\n                                if (registrationAttempts > 10) {\n                                    console.log('Failed to register markers after 10 attempts');\n                                    clearInterval(registrationTimer);\n                                }\n                            }\n                        }, 500);\n                    }\n                    \n                    if (bounds.length > 0) {\n                        map.fitBounds(bounds, {padding: [20, 20]});\n                    }\n                    if (typeof L.Control.Search !== \"undefined\") {\n                        var markerLayer = L.layerGroup(markers);\n                        var searchControl = new L.Control.Search({\n                            layer: markerLayer,\n                            propertyName: 'clinicName',\n                            marker: false,\n                            moveToLocation: function(latlng, title, map) {\n                                map.setView(latlng, 14);\n                            }\n                        });\n                        searchControl.on('search:locationfound', function(e) {\n                            if (e.layer._popup) e.layer.openPopup();\n                        });\n                        map.addControl(searchControl);\n                    }\n                    setTimeout(function() { if (map) { map.invalidateSize(); } }, 250);\n\n                    // Add global function to center on a clinic by name\n                    window.centerMapOnClinic = function(clinicName) {\n                        var found = false;\n                        markers.forEach(function(marker) {\n                            if (marker.clinicName && marker.clinicName.toLowerCase() === clinicName.toLowerCase()) {\n                                // First scroll to the map\n                                var mapElement = document.getElementById(\"" . esc_js($map_id) . "\");\n                                if (mapElement) {\n                                    mapElement.scrollIntoView({ \n                                        behavior: 'smooth', \n                                        block: 'center' \n                                    });\n                                }\n                                \n                                // Then center the map on the clinic\n                                setTimeout(function() {\n                                    map.setView(marker.getLatLng(), 16, {\n                                        animate: true,\n                                        duration: 1.5\n                                    });\n                                    setTimeout(function() {\n                                        marker.openPopup();\n                                    }, 1600);\n                                }, 500); // Wait for scroll to complete\n                                found = true;\n                                return false;\n                            }\n                        });\n                        if (!found) {\n                            console.log('Available clinics:', markers.map(function(m) { return m.clinicName; }));\n                            alert('Clinic \\\"' + clinicName + '\\\" not found on map.');\n                        }\n                    };\n                } catch (error) {\n                    console.error(\"Map initialization error:\", error);\n                    document.getElementById(\"" . esc_js($map_id) . "\").innerHTML = \"<div style=\\\"padding: 20px; text-align: center; color: #666;\\\">Error loading map. Please refresh the page.</div>\";\n                }\n            }\n            initializeMap();\n        });\n        </script>";
+        $output .= "<script type=\"text/javascript\">\n        document.addEventListener(\"DOMContentLoaded\", function() {\n            function initializeMap() {\n                if (typeof L === \"undefined\" || typeof L.Control === \"undefined\") {\n                    setTimeout(initializeMap, 100);\n                    return;\n                }\n                try {\n                    var map = L.map(\"" . esc_js($map_id) . "\").setView([" . floatval($atts['center_lat']) . ", " . floatval($atts['center_lng']) . "], " . intval($atts['zoom']) . ");\n                    var tileLayer = L.tileLayer(\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\", {\n                        attribution: \"&copy; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap</a> contributors\",\n                        maxZoom: 18\n                    });\n                    tileLayer.addTo(map);\n                    var clinics = " . json_encode($clinic_data) . ";\n                    var bounds = [];\n                    var markers = [];\n                    clinics.forEach(function(clinic, index) {\n                        if (clinic.lat && clinic.lng) {\n                            var marker = L.marker([clinic.lat, clinic.lng]).addTo(map);\n                            marker.bindPopup((clinic.name ? '<h4>' + clinic.name + '</h4>' : '') +\n                                (clinic.address ? '<p>' + clinic.address + '</p>' : '') +\n                                (clinic.phone ? '<p>Phone: ' + clinic.phone + '</p>' : '') +\n                                (clinic.email ? '<p>Email: ' + clinic.email + '</p>' : '') +\n                                (clinic.website ? '<p><a href=\"' + clinic.website + '\" target=\"_blank\">Website</a></p>' : ''));\n                            marker.clinicName = clinic.name || '';\n                            markers.push(marker);\n                            bounds.push([clinic.lat, clinic.lng]);\n                        }\n                    });\n                    if (bounds.length > 0) {\n                        map.fitBounds(bounds, {padding: [20, 20]});\n                    }\n                    if (typeof L.Control.Search !== \"undefined\") {\n                        var markerLayer = L.layerGroup(markers);\n                        var searchControl = new L.Control.Search({\n                            layer: markerLayer,\n                            propertyName: 'clinicName',\n                            marker: false,\n                            moveToLocation: function(latlng, title, map) {\n                                map.setView(latlng, 14);\n                            }\n                        });\n                        searchControl.on('search:locationfound', function(e) {\n                            if (e.layer._popup) e.layer.openPopup();\n                        });\n                        map.addControl(searchControl);\n                    }\n                    setTimeout(function() { if (map) { map.invalidateSize(); } }, 250);\n\n                    // Add global function to center on a clinic by name\n                    window.centerMapOnClinic = function(clinicName) {\n                        var found = false;\n                        markers.forEach(function(marker) {\n                            if (marker.clinicName && marker.clinicName.toLowerCase() === clinicName.toLowerCase()) {\n                                // First scroll to the map\n                                var mapElement = document.getElementById(\"" . esc_js($map_id) . "\");\n                                if (mapElement) {\n                                    mapElement.scrollIntoView({ \n                                        behavior: 'smooth', \n                                        block: 'center' \n                                    });\n                                }\n                                \n                                // Then center the map on the clinic\n                                setTimeout(function() {\n                                    map.setView(marker.getLatLng(), 16, {\n                                        animate: true,\n                                        duration: 1.5\n                                    });\n                                    setTimeout(function() {\n                                        marker.openPopup();\n                                    }, 1600);\n                                }, 500); // Wait for scroll to complete\n                                found = true;\n                                return false;\n                            }\n                        });\n                        if (!found) {\n                            console.log('Available clinics:', markers.map(function(m) { return m.clinicName; }));\n                            alert('Clinic \\\"' + clinicName + '\\\" not found on map.');\n                        }\n                    };\n                } catch (error) {\n                    console.error(\"Map initialization error:\", error);\n                    document.getElementById(\"" . esc_js($map_id) . "\").innerHTML = \"<div style=\\\"padding: 20px; text-align: center; color: #666;\\\">Error loading map. Please refresh the page.</div>\";\n                }\n            }\n            initializeMap();\n        });\n        </script>";
 
         return $output;
     }
@@ -760,553 +956,148 @@ class MapIntegration
     }
 
     /**
-     * Get all chiropractor locations with full details for listing
+     * Display clinic listings with improved UI
      */
-    public function get_all_chiropractor_locations($user_role = 'subscriber')
+    public function display_clinic_listings($atts)
     {
-        $locations = array();
-
-        // Define address sets for primary, secondary, and third addresses
-        $address_sets = array(
-            '' => 'Primary',
-            '_2' => 'Secondary', 
-            '_3' => 'Third'
-        );
-
-        foreach ($address_sets as $suffix => $label) {
-            $lat_key = 'mepr_clinic_lat' . $suffix;
-            $lng_key = 'mepr_clinic_lng' . $suffix;
-            $province_key = 'mepr_clinic_province' . $suffix;
-            $street_key = 'mepr_clinic_street' . $suffix;
-            $city_key = 'mepr_clinic_city' . $suffix;
-            $name_key = 'mepr_clinic_name' . $suffix;
-            $phone_key = 'mepr_clinic_phone' . $suffix;
-            $email_key = 'mepr_clinic_email_address' . $suffix;
-            $website_key = 'mepr_clinic_website' . $suffix;
-
-            // Modified query to get all users with addresses (not just those with coordinates)
-            $args = array(
-                'role'    => $user_role,
-                'meta_query' => array(
-                    'relation' => 'OR',
-                    array(
-                        'key'     => $street_key,
-                        'value'   => '',
-                        'compare' => '!='
-                    ),
-                    array(
-                        'key'     => $city_key,
-                        'value'   => '',
-                        'compare' => '!='
-                    )
-                ),
-                'fields' => 'all',
-            );
-
-            $users = get_users($args);
-
-            foreach ($users as $user) {
-                $lat = get_user_meta($user->ID, $lat_key, true);
-                $lng = get_user_meta($user->ID, $lng_key, true);
-                $street = get_user_meta($user->ID, $street_key, true);
-                $city = get_user_meta($user->ID, $city_key, true);
-                $province = get_user_meta($user->ID, $province_key, true);
-                $clinic_name = get_user_meta($user->ID, $name_key, true);
-                $phone = get_user_meta($user->ID, $phone_key, true);
-                $email = get_user_meta($user->ID, $email_key, true);
-                $website = get_user_meta($user->ID, $website_key, true);
-
-                // Skip if no address information at all
-                if (empty($street) && empty($city) && empty($province)) {
-                    continue;
-                }
-
-                // Get additional user details
-                $first_name = get_user_meta($user->ID, 'first_name', true);
-                $last_name = get_user_meta($user->ID, 'last_name', true);
-                $chiropractor_name = trim($first_name . ' ' . $last_name);
-                if (empty($chiropractor_name)) {
-                    $chiropractor_name = $user->display_name;
-                }
-
-                // Build full address
-                $address_parts = array_filter(array($street, $city, $province));
-                $full_address = implode(', ', $address_parts);
-
-                // Determine if this location has valid coordinates
-                $has_coordinates = !empty($lat) && !empty($lng) && floatval($lat) != 0 && floatval($lng) != 0;
-
-                $locations[] = array(
-                    'user_id' => $user->ID,
-                    'chiropractor_name' => $chiropractor_name,
-                    'clinic_name' => $clinic_name ?: 'Clinic',
-                    'location_type' => $label,
-                    'full_address' => $full_address,
-                    'street' => $street,
-                    'city' => $city,
-                    'province' => $province,
-                    'phone' => $phone,
-                    'email' => $email,
-                    'website' => $website,
-                    'latitude' => $has_coordinates ? floatval($lat) : null,
-                    'longitude' => $has_coordinates ? floatval($lng) : null,
-                    'has_coordinates' => $has_coordinates,
-                    'suffix' => $suffix
+        // Get all clinic locations with coordinates (filtered by user role)
+        $clinic_data = $this->get_all_clinic_coordinates($atts['user_role']);
+        
+        if (empty($clinic_data)) {
+            return '<div class="clinic-listings-container"><p>No clinic locations found.</p></div>';
+        }
+        
+        // Group clinics by user (chiropractor) to handle multiple locations
+        $grouped_clinics = array();
+        foreach ($clinic_data as $clinic) {
+            $user_id = $clinic['user_id'];
+            if (!isset($grouped_clinics[$user_id])) {
+                $grouped_clinics[$user_id] = array(
+                    'user_id' => $user_id,
+                    'chiropractor_name' => '',
+                    'locations' => array()
                 );
             }
-        }
-
-        // Sort by chiropractor name, then by clinic name
-        usort($locations, function($a, $b) {
-            $cmp = strcmp($a['chiropractor_name'], $b['chiropractor_name']);
-            if ($cmp === 0) {
-                return strcmp($a['clinic_name'], $b['clinic_name']);
+            
+            // Extract chiropractor name (remove location suffix)
+            $chiropractor_name = $clinic['name'];
+            if (preg_match('/^(.+?)\s*\((?:Primary|Secondary|Third)\)$/', $chiropractor_name, $matches)) {
+                $chiropractor_name = trim($matches[1]);
             }
-            return $cmp;
-        });
-
-        return $locations;
-    }
-
-    /**
-     * Display chiropractor locations list shortcode
-     */
-    public function display_chiropractor_list_shortcode($atts)
-    {
-        $atts = shortcode_atts(array(
-            'user_role' => 'subscriber',
-            'show_phone' => 'true',
-            'show_email' => 'true', 
-            'show_website' => 'true',
-            'show_coordinates' => 'false',
-            'show_search' => 'true',
-            'show_sort' => 'true',
-            'default_sort' => 'name'
-        ), $atts);
-
-        $locations = $this->get_all_chiropractor_locations($atts['user_role']);
-
-        if (empty($locations)) {
-            return '<p>No chiropractor locations found.</p>';
-        }
-
-        // Generate unique ID for this instance
-        $list_id = 'chiropractor-list-' . uniqid();
-
-        $output = '<div class="chiropractor-locations-list" id="' . esc_attr($list_id) . '">';
-        
-        // Add search functionality if enabled
-        if ($atts['show_search'] === 'true') {
-            $output .= '<div class="search-container" style="margin-bottom: 20px;">';
-            $output .= '<input type="text" id="' . esc_attr($list_id) . '-search" placeholder="Search chiropractors, clinics, cities..." style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">';
-            $output .= '<p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Search by name, clinic, city, or address</p>';
-            $output .= '</div>';
+            
+            if (empty($grouped_clinics[$user_id]['chiropractor_name'])) {
+                $grouped_clinics[$user_id]['chiropractor_name'] = $chiropractor_name;
+            }
+            
+            $grouped_clinics[$user_id]['locations'][] = $clinic;
         }
         
-        // Add sort functionality if enabled
-        if ($atts['show_sort'] === 'true') {
-            $output .= '<div class="sort-container" style="margin-bottom: 20px;">';
-            $output .= '<label for="' . esc_attr($list_id) . '-sort" style="margin-right: 10px; font-weight: bold;">Sort by:</label>';
-            $output .= '<select id="' . esc_attr($list_id) . '-sort" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">';
-            $output .= '<option value="name"' . ($atts['default_sort'] === 'name' ? ' selected' : '') . '>Chiropractor Name (A-Z)</option>';
-            $output .= '<option value="name_desc"' . ($atts['default_sort'] === 'name_desc' ? ' selected' : '') . '>Chiropractor Name (Z-A)</option>';
-            $output .= '<option value="clinic"' . ($atts['default_sort'] === 'clinic' ? ' selected' : '') . '>Clinic Name (A-Z)</option>';
-            $output .= '<option value="clinic_desc"' . ($atts['default_sort'] === 'clinic_desc' ? ' selected' : '') . '>Clinic Name (Z-A)</option>';
-            $output .= '<option value="city"' . ($atts['default_sort'] === 'city' ? ' selected' : '') . '>City (A-Z)</option>';
-            $output .= '<option value="city_desc"' . ($atts['default_sort'] === 'city_desc' ? ' selected' : '') . '>City (Z-A)</option>';
-            $output .= '<option value="province"' . ($atts['default_sort'] === 'province' ? ' selected' : '') . '>Province (A-Z)</option>';
-            $output .= '<option value="province_desc"' . ($atts['default_sort'] === 'province_desc' ? ' selected' : '') . '>Province (Z-A)</option>';
-            $output .= '<option value="map_status"' . ($atts['default_sort'] === 'map_status' ? ' selected' : '') . '>Map Status (On Map First)</option>';
-            $output .= '<option value="map_status_desc"' . ($atts['default_sort'] === 'map_status_desc' ? ' selected' : '') . '>Map Status (Needs Geocoding First)</option>';
-            $output .= '</select>';
-            $output .= '</div>';
-        }
+        // Generate unique map ID for the listings to work with
+        $map_id = 'map-integration-' . uniqid();
         
-        $output .= '<div class="results-header">';
-        $output .= '<h3>Chiropractor Locations (<span id="' . esc_attr($list_id) . '-count">' . count($locations) . '</span> found)</h3>';
-        $output .= '</div>';
+        $output = '<div class="clinic-listings-container">';
         
-        $output .= '<div class="locations-container">';
-        
-        foreach ($locations as $index => $location) {
-            // Create searchable text for this location
-            $searchable_text = strtolower(implode(' ', array(
-                $location['chiropractor_name'],
-                $location['clinic_name'],
-                $location['full_address'],
-                $location['street'],
-                $location['city'],
-                $location['province'],
-                $location['phone'],
-                $location['email']
-            )));
+        foreach ($grouped_clinics as $group) {
+            $chiropractor_name = $group['chiropractor_name'];
+            $locations = $group['locations'];
             
-            // Add visual styling based on whether location has coordinates
-            $border_style = $location['has_coordinates'] ? 'border: 1px solid #ddd;' : 'border: 1px solid #ff9800; background-color: #fff3cd;';
+            // Determine if this chiropractor has multiple locations
+            $has_multiple_locations = count($locations) > 1;
             
-            $output .= '<div class="location-item" 
-                data-search="' . esc_attr($searchable_text) . '"
-                data-name="' . esc_attr(strtolower($location['chiropractor_name'])) . '"
-                data-clinic="' . esc_attr(strtolower($location['clinic_name'])) . '"
-                data-city="' . esc_attr(strtolower($location['city'])) . '"
-                data-province="' . esc_attr(strtolower($location['province'])) . '"
-                data-map-status="' . esc_attr($location['has_coordinates'] ? '1' : '0') . '"
-                style="margin-bottom: 20px; padding: 15px; ' . $border_style . ' border-radius: 5px;">';
-            
-            // Clinic name and chiropractor name with status indicator
-            $status_indicator = $location['has_coordinates'] ? 
-                '<span style="color: #28a745; font-size: 12px; margin-left: 10px;">📍 On Map</span>' : 
-                '<span style="color: #dc3545; font-size: 12px; margin-left: 10px;">⚠️ Address Needs Geocoding</span>';
-            
-            $output .= '<h4 style="margin: 0 0 10px 0; color: #2c5aa0;">' . esc_html($location['clinic_name']) . $status_indicator . '</h4>';
-            $output .= '<p style="margin: 0 0 5px 0;"><strong>Chiropractor:</strong> ' . esc_html($location['chiropractor_name']) . '</p>';
-            
-            // Location type if not primary
-            if ($location['location_type'] !== 'Primary') {
-                $output .= '<p style="margin: 0 0 5px 0;"><strong>Location Type:</strong> ' . esc_html($location['location_type']) . '</p>';
-            }
-            
-            // Address
-            if (!empty($location['full_address'])) {
-                $output .= '<p style="margin: 0 0 5px 0;"><strong>Address:</strong> ' . esc_html($location['full_address']) . '</p>';
-            }
-            
-            // Phone
-            if ($atts['show_phone'] === 'true' && !empty($location['phone'])) {
-                $output .= '<p style="margin: 0 0 5px 0;"><strong>Phone:</strong> <a href="tel:' . esc_attr($location['phone']) . '">' . esc_html($location['phone']) . '</a></p>';
-            }
-            
-            // Email
-            if ($atts['show_email'] === 'true' && !empty($location['email'])) {
-                $output .= '<p style="margin: 0 0 5px 0;"><strong>Email:</strong> <a href="mailto:' . esc_attr($location['email']) . '">' . esc_html($location['email']) . '</a></p>';
-            }
-            
-            // Website
-            if ($atts['show_website'] === 'true' && !empty($location['website'])) {
-                $website_url = $location['website'];
-                if (!preg_match('/^https?:\/\//', $website_url)) {
-                    $website_url = 'http://' . $website_url;
+            if ($has_multiple_locations) {
+                // Group display for multiple locations
+                $output .= '<div class="clinic-group clinic-group-multiple">';
+                $output .= '<div class="clinic-group-header">';
+                $output .= '<h3 class="chiropractor-name">' . esc_html($chiropractor_name) . '</h3>';
+                $output .= '<p class="multiple-locations-note">' . count($locations) . ' locations</p>';
+                $output .= '</div>';
+                
+                foreach ($locations as $location) {
+                    $output .= $this->render_single_location($location, $chiropractor_name, true);
                 }
-                $output .= '<p style="margin: 0 0 5px 0;"><strong>Website:</strong> <a href="' . esc_url($website_url) . '" target="_blank" rel="noopener">' . esc_html($location['website']) . '</a></p>';
-            }
-            
-            // Coordinates (if requested)
-            if ($atts['show_coordinates'] === 'true') {
-                if ($location['has_coordinates']) {
-                    $output .= '<p style="margin: 0 0 5px 0;"><strong>Coordinates:</strong> ' . esc_html($location['latitude']) . ', ' . esc_html($location['longitude']) . '</p>';
-                } else {
-                    $output .= '<p style="margin: 0 0 5px 0; color: #dc3545;"><strong>Coordinates:</strong> Not available</p>';
-                }
-            }
-            
-            // Show map button or message based on coordinates availability
-            if ($location['has_coordinates']) {
-                $output .= '<p style="margin: 10px 0 0 0;"><button onclick="if(typeof centerMapOnClinic === \'function\') { centerMapOnClinic(\'' . esc_js($location['clinic_name']) . '\'); } else { alert(\'Map not available on this page.\'); }" style="background: #2c5aa0; color: white; border: none; padding: 8px 15px; border-radius: 3px; cursor: pointer;">Show on Map</button></p>';
+                
+                $output .= '</div>'; // Close clinic-group-multiple
             } else {
-                $output .= '<p style="margin: 10px 0 0 0; color: #6c757d; font-style: italic;">This location is not available on the map. Address needs to be geocoded.</p>';
+                // Single location display
+                $output .= '<div class="clinic-group clinic-group-single">';
+                $output .= $this->render_single_location($locations[0], $chiropractor_name, false);
+                $output .= '</div>'; // Close clinic-group-single
             }
-            
-            $output .= '</div>';
         }
         
-        $output .= '</div>'; // Close locations-container
+        $output .= '</div>'; // Close clinic-listings-container
         
-        // Add JavaScript for search and sort functionality
-        if ($atts['show_search'] === 'true' || $atts['show_sort'] === 'true') {
-            $output .= $this->get_search_and_sort_script($list_id, $atts['show_search'] === 'true', $atts['show_sort'] === 'true');
-        }
-        
-        $output .= '</div>'; // Close chiropractor-locations-list
-        
-        return $output;
-    }
-
-    /**
-     * Generate search and sort JavaScript
-     */
-    private function get_search_and_sort_script($list_id, $show_search = true, $show_sort = true)
-    {
-        return '<script type="text/javascript">
+        // Add a script to handle clicks when no map is present
+        $output .= '<script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() {
-            var searchInput = ' . ($show_search ? 'document.getElementById("' . esc_js($list_id) . '-search")' : 'null') . ';
-            var locationItems = document.querySelectorAll("#' . esc_js($list_id) . ' .location-item");
-            var countElement = document.getElementById("' . esc_js($list_id) . '-count");
-            
-            if (!locationItems.length) return;
-            
-            // Store reference to map markers for filtering
-            var allMapMarkers = [];
-            
-            // Function to collect map markers (called after map initialization)
-            window.registerMapMarkers = function(markers) {
-                allMapMarkers = markers;
-                console.log("Registered", markers.length, "markers for filtering");
-            };
-            
-            // Fuzzy search function - calculates similarity between two strings
-            function fuzzyScore(needle, haystack) {
-                needle = needle.toLowerCase();
-                haystack = haystack.toLowerCase();
-                
-                // Exact match gets highest score
-                if (haystack.indexOf(needle) !== -1) {
-                    return 100;
-                }
-                
-                // Calculate Levenshtein distance-based score
-                var needleLen = needle.length;
-                var haystackLen = haystack.length;
-                
-                if (needleLen === 0) return haystackLen;
-                if (haystackLen === 0) return needleLen;
-                
-                // Create distance matrix
-                var matrix = [];
-                for (var i = 0; i <= haystackLen; i++) {
-                    matrix[i] = [i];
-                }
-                for (var j = 0; j <= needleLen; j++) {
-                    matrix[0][j] = j;
-                }
-                
-                // Calculate distances
-                for (i = 1; i <= haystackLen; i++) {
-                    for (j = 1; j <= needleLen; j++) {
-                        if (haystack.charAt(i - 1) === needle.charAt(j - 1)) {
-                            matrix[i][j] = matrix[i - 1][j - 1];
-                        } else {
-                            matrix[i][j] = Math.min(
-                                matrix[i - 1][j - 1] + 1, // substitution
-                                matrix[i][j - 1] + 1,     // insertion
-                                matrix[i - 1][j] + 1      // deletion
-                            );
-                        }
-                    }
-                }
-                
-                var distance = matrix[haystackLen][needleLen];
-                var maxLen = Math.max(needleLen, haystackLen);
-                
-                // Convert distance to similarity score (0-100)
-                return Math.max(0, 100 - (distance / maxLen * 100));
-            }
-            
-            // Search function
-            function performSearch() {
-                if (!searchInput) return;
-                
-                var query = searchInput.value.trim();
-                var visibleCount = 0;
-                var visibleClinicNames = [];
-                
-                console.log("Performing search for:", query);
-                
-                locationItems.forEach(function(item) {
-                    var searchText = item.getAttribute("data-search") || "";
-                    var clinicName = item.querySelector("h4") ? item.querySelector("h4").textContent.trim() : "";
-                    
-                    if (query === "") {
-                        // Show all items when search is empty
-                        item.style.display = "block";
-                        visibleCount++;
-                        if (clinicName) visibleClinicNames.push(clinicName.toLowerCase());
-                    } else {
-                        // Calculate fuzzy match score
-                        var score = fuzzyScore(query, searchText);
-                        
-                        // Show items with score above threshold (60% similarity)
-                        if (score >= 60) {
-                            item.style.display = "block";
-                            visibleCount++;
-                            if (clinicName) visibleClinicNames.push(clinicName.toLowerCase());
-                        } else {
-                            item.style.display = "none";
-                        }
-                    }
-                });
-                
-                console.log("Visible clinics:", visibleClinicNames);
-                
-                // Update count
-                if (countElement) {
-                    countElement.textContent = visibleCount;
-                }
-                
-                // Filter map markers to match visible list items
-                filterMapMarkers(visibleClinicNames);
-            }
-            
-            // Function to filter map markers based on visible clinic names
-            function filterMapMarkers(visibleClinicNames) {
-                if (allMapMarkers.length === 0) {
-                    console.log("No map markers available for filtering");
-                    return;
-                }
-                
-                console.log("Filtering", allMapMarkers.length, "markers. Visible clinics:", visibleClinicNames);
-                
-                var visibleMarkers = [];
-                
-                allMapMarkers.forEach(function(marker) {
-                    var markerClinicName = marker.clinicName ? marker.clinicName.toLowerCase() : "";
-                    
-                    if (visibleClinicNames.length === 0 || visibleClinicNames.includes(markerClinicName)) {
-                        // Show marker
-                        if (!marker._map && window.currentMap) {
-                            marker.addTo(window.currentMap);
-                        }
-                        visibleMarkers.push(marker);
-                        console.log("Showing marker:", markerClinicName);
-                    } else {
-                        // Hide marker
-                        if (marker._map) {
-                            marker.remove();
-                        }
-                        console.log("Hiding marker:", markerClinicName);
-                    }
-                });
-                
-                // Adjust map bounds to fit visible markers
-                if (window.currentMap && visibleMarkers.length > 0) {
-                    try {
-                        var group = new L.featureGroup(visibleMarkers);
-                        window.currentMap.fitBounds(group.getBounds().pad(0.1));
-                        console.log("Adjusted map bounds for", visibleMarkers.length, "visible markers");
-                    } catch (error) {
-                        console.log("Error adjusting map bounds:", error);
-                    }
-                } else if (window.currentMap && visibleMarkers.length === 0) {
-                    console.log("No visible markers, keeping current map view");
-                }
-            }
-            
-            // Sort function
-            function sortLocationItems(sortBy) {
-                console.log("Sort function called with:", sortBy);
-                
-                var container = document.querySelector("#' . esc_js($list_id) . ' .locations-container");
-                if (!container) {
-                    console.log("Container not found");
-                    return;
-                }
-                
-                var items = Array.from(container.querySelectorAll(".location-item"));
-                console.log("Found", items.length, "items to sort");
-                
-                items.sort(function(a, b) {
-                    var aVal, bVal;
-                    
-                    switch(sortBy) {
-                        case "name":
-                            aVal = a.getAttribute("data-name") || "";
-                            bVal = b.getAttribute("data-name") || "";
-                            return aVal.localeCompare(bVal);
-                            
-                        case "name_desc":
-                            aVal = a.getAttribute("data-name") || "";
-                            bVal = b.getAttribute("data-name") || "";
-                            return bVal.localeCompare(aVal);
-                            
-                        case "clinic":
-                            aVal = a.getAttribute("data-clinic") || "";
-                            bVal = b.getAttribute("data-clinic") || "";
-                            return aVal.localeCompare(bVal);
-                            
-                        case "clinic_desc":
-                            aVal = a.getAttribute("data-clinic") || "";
-                            bVal = b.getAttribute("data-clinic") || "";
-                            return bVal.localeCompare(aVal);
-                            
-                        case "city":
-                            aVal = a.getAttribute("data-city") || "";
-                            bVal = b.getAttribute("data-city") || "";
-                            return aVal.localeCompare(bVal);
-                            
-                        case "city_desc":
-                            aVal = a.getAttribute("data-city") || "";
-                            bVal = b.getAttribute("data-city") || "";
-                            return bVal.localeCompare(aVal);
-                            
-                        case "province":
-                            aVal = a.getAttribute("data-province") || "";
-                            bVal = b.getAttribute("data-province") || "";
-                            return aVal.localeCompare(bVal);
-                            
-                        case "province_desc":
-                            aVal = a.getAttribute("data-province") || "";
-                            bVal = b.getAttribute("data-province") || "";
-                            return bVal.localeCompare(aVal);
-                            
-                        case "map_status":
-                            aVal = parseInt(a.getAttribute("data-map-status")) || 0;
-                            bVal = parseInt(b.getAttribute("data-map-status")) || 0;
-                            // Sort by map status (1 = on map first), then by name
-                            if (bVal !== aVal) {
-                                return bVal - aVal;
-                            }
-                            return (a.getAttribute("data-name") || "").localeCompare(b.getAttribute("data-name") || "");
-                            
-                        case "map_status_desc":
-                            aVal = parseInt(a.getAttribute("data-map-status")) || 0;
-                            bVal = parseInt(b.getAttribute("data-map-status")) || 0;
-                            // Sort by map status (0 = needs geocoding first), then by name
-                            if (aVal !== bVal) {
-                                return aVal - bVal;
-                            }
-                            return (a.getAttribute("data-name") || "").localeCompare(b.getAttribute("data-name") || "");
-                            
-                        default:
-                            console.log("Unknown sort option:", sortBy);
-                            return 0;
-                    }
-                });
-                
-                // Re-append sorted items to container
-                items.forEach(function(item) {
-                    container.appendChild(item);
-                });
-                
-                console.log("Sorted locations by:", sortBy);
-            }
-            
-            // Add search event listeners with debouncing
-            var searchTimeout;
-            if (searchInput) {
-                searchInput.addEventListener("input", function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(performSearch, 150);
-                });
-                
-                // Also search on paste
-                searchInput.addEventListener("paste", function() {
-                    setTimeout(performSearch, 10);
-                });
-            }
-            
-            // Add sort event listener
-            var sortSelect = document.getElementById("' . esc_js($list_id) . '-sort");
-            console.log("Sort select element:", sortSelect);
-            if (sortSelect) {
-                console.log("Adding change event listener to sort select");
-                sortSelect.addEventListener("change", function() {
-                    console.log("Sort dropdown changed to:", this.value);
-                    sortLocationItems(this.value);
-                });
-                
-                // Apply initial sort
-                var initialSort = sortSelect.value;
-                console.log("Applying initial sort:", initialSort);
-                sortLocationItems(initialSort);
-            } else {
-                console.log("Sort select element not found for ID:", "' . esc_js($list_id) . '-sort");
-            }
-            
-            // Initial call to set up the markers if they are already registered
-            if (typeof window.registerMapMarkers === "function" && window.allMapMarkersForSync) {
-                window.registerMapMarkers(window.allMapMarkersForSync);
+            // Provide fallback if centerMapOnClinic is not defined (no map present)
+            if (typeof window.centerMapOnClinic === "undefined") {
+                window.centerMapOnClinic = function(clinicName) {
+                    alert("Map not available. Clinic: " + clinicName);
+                };
             }
         });
         </script>';
+        
+        return $output;
+    }
+    
+    /**
+     * Render a single clinic location listing
+     */
+    private function render_single_location($location, $chiropractor_name, $is_grouped = false)
+    {
+        $clinic_name = $location['name'];
+        $address = $location['address'];
+        $phone = $location['phone'];
+        $email = $location['email'];
+        $website = $location['website'];
+        
+        // Extract location name from clinic name if it has a suffix
+        $location_name = '';
+        if (preg_match('/\(([^)]+)\)$/', $clinic_name, $matches)) {
+            $location_name = $matches[1];
+        }
+        
+        $output = '<div class="clinic-listing">';
+        
+        if (!$is_grouped) {
+            // For single locations, show chiropractor name prominently
+            $output .= '<h3 class="chiropractor-name">';
+            $output .= '<a href="#" class="clinic-link" onclick="centerMapOnClinic(\'' . esc_js($clinic_name) . '\'); return false;">';
+            $output .= esc_html($chiropractor_name);
+            $output .= '</a>';
+            $output .= '</h3>';
+        } else {
+            // For grouped locations, show location name as clickable
+            if ($location_name) {
+                $output .= '<h4 class="location-name">';
+                $output .= '<a href="#" class="clinic-link" onclick="centerMapOnClinic(\'' . esc_js($clinic_name) . '\'); return false;">';
+                $output .= esc_html($location_name) . ' Location';
+                $output .= '</a>';
+                $output .= '</h4>';
+            }
+        }
+        
+        if ($address) {
+            $output .= '<p class="clinic-address">' . esc_html($address) . '</p>';
+        }
+        
+        if ($phone) {
+            $output .= '<p class="clinic-phone">Phone: ' . esc_html($phone) . '</p>';
+        }
+        
+        if ($email) {
+            $output .= '<p class="clinic-email">Email: <a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a></p>';
+        }
+        
+        if ($website) {
+            $output .= '<p class="clinic-website"><a href="' . esc_url($website) . '" target="_blank">Visit Website</a></p>';
+        }
+        
+        $output .= '</div>'; // Close clinic-listing
+        
+        return $output;
     }
 
     /**
@@ -1646,6 +1437,347 @@ class MapIntegration
         dbDelta($sql);
         
         MapGeocoder::log_message("Geocoding cache table created/updated: $table_name");
+    }
+
+    /**
+     * AJAX handler to start bulk geocoding
+     */
+    public function ajax_start_bulk_geocoding()
+    {
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Check if already running
+        $status = get_transient('bulk_geocoding_status');
+        if ($status && $status['running']) {
+            wp_send_json_error('Bulk geocoding is already running');
+        }
+        
+        // Start the process
+        $this->start_background_geocoding();
+        
+        wp_send_json_success('Bulk geocoding started');
+    }
+    
+    /**
+     * AJAX handler to stop bulk geocoding
+     */
+    public function ajax_stop_bulk_geocoding()
+    {
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Stop the process
+        $this->stop_background_geocoding();
+        
+        wp_send_json_success('Bulk geocoding stopped');
+    }
+    
+    /**
+     * AJAX handler to get bulk geocoding status
+     */
+    public function ajax_get_bulk_geocoding_status()
+    {
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid nonce');
+        }
+        
+        // Get current status
+        $status = $this->get_bulk_geocoding_status();
+        
+        wp_send_json_success($status);
+    }
+    
+    /**
+     * Start background geocoding process
+     */
+    private function start_background_geocoding()
+    {
+        // Check for stale processes and clean them up
+        $status = get_transient('bulk_geocoding_status');
+        if ($status && $status['running']) {
+            // Check if it's been running too long without updates (over 5 minutes)
+            $last_update = isset($status['started_at']) ? $status['started_at'] : 0;
+            if (time() - $last_update > 300) {
+                MapGeocoder::log_message("Cleaning up stale geocoding process");
+                wp_clear_scheduled_hook('process_geocoding_batch');
+            } else {
+                MapGeocoder::log_message("Background geocoding is already running");
+                return;
+            }
+        }
+        
+        // Initialize status
+        $status = array(
+            'running' => true,
+            'started_at' => time(),
+            'total_processed' => 0,
+            'total_success' => 0,
+            'total_failed' => 0,
+            'current_user_id' => 0,
+            'progress_message' => 'Starting bulk geocoding...'
+        );
+        
+        set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+        
+        // Schedule the first batch
+        wp_schedule_single_event(time(), 'process_geocoding_batch');
+        
+        MapGeocoder::log_message("Background bulk geocoding started");
+    }
+    
+    /**
+     * Stop background geocoding process
+     */
+    private function stop_background_geocoding()
+    {
+        // Update status to stopped
+        $status = get_transient('bulk_geocoding_status');
+        if ($status) {
+            $status['running'] = false;
+            $status['stopped_at'] = time();
+            $status['progress_message'] = 'Geocoding stopped by user';
+            set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+        }
+        
+        // Clear any scheduled events
+        wp_clear_scheduled_hook('process_geocoding_batch');
+        
+        MapGeocoder::log_message("Background bulk geocoding stopped by user");
+    }
+    
+    /**
+     * Process a batch of geocoding in the background
+     */
+    public function process_geocoding_batch()
+    {
+        // Check if we should continue
+        $status = get_transient('bulk_geocoding_status');
+        if (!$status || !$status['running']) {
+            MapGeocoder::log_message("Background geocoding process stopped");
+            return;
+        }
+        
+        MapGeocoder::log_message("Processing geocoding batch...");
+        
+        // Get users that need geocoding
+        $users_to_process = $this->get_users_needing_geocoding(10); // Process 10 at a time
+        
+        if (empty($users_to_process)) {
+            // No more users to process, complete the job
+            $status['running'] = false;
+            $status['completed_at'] = time();
+            $status['progress_message'] = 'Bulk geocoding completed successfully';
+            set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+            
+            MapGeocoder::log_message("Background bulk geocoding completed: {$status['total_processed']} processed, {$status['total_success']} successful");
+            return;
+        }
+        
+        // Process each user
+        foreach ($users_to_process as $user_info) {
+            // Check if we should stop
+            $current_status = get_transient('bulk_geocoding_status');
+            if (!$current_status || !$current_status['running']) {
+                break;
+            }
+            
+            $user_id = $user_info['user_id'];
+            $suffix = $user_info['suffix'];
+            $fields = $user_info['fields'];
+            
+            $status['current_user_id'] = $user_id;
+            $status['progress_message'] = "Processing user {$user_id} (suffix: {$suffix})";
+            set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+            
+            $street = get_user_meta($user_id, $fields['street'], true);
+            $city = get_user_meta($user_id, $fields['city'], true);
+            $province = get_user_meta($user_id, $fields['province'], true);
+            
+            MapGeocoder::log_message("Background processing user {$user_id}: street='{$street}', city='{$city}', province='{$province}'");
+            
+            // Only geocode if we have street or city data
+            if (!empty($street) || !empty($city)) {
+                $coordinates = $this->geocode_address_with_improved_fallback($street, $city, $province);
+                
+                if ($coordinates) {
+                    MapGeocoder::save_coordinates($user_id, $coordinates, $suffix);
+                    $status['total_success']++;
+                    MapGeocoder::log_message("Background geocoding: Successfully geocoded address for user {$user_id} (suffix: {$suffix})");
+                } else {
+                    $status['total_failed']++;
+                    MapGeocoder::log_message("Background geocoding: Failed to geocode address for user {$user_id} (suffix: {$suffix})");
+                }
+            } else {
+                MapGeocoder::log_message("Background geocoding: User {$user_id} has province-only address, skipping");
+            }
+            
+            $status['total_processed']++;
+            set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
+            
+            // Small delay to respect rate limits
+            sleep(1);
+        }
+        
+        // Schedule next batch if still running
+        $final_status = get_transient('bulk_geocoding_status');
+        if ($final_status && $final_status['running']) {
+            wp_schedule_single_event(time() + 2, 'process_geocoding_batch');
+        }
+    }
+    
+    /**
+     * Get users that need geocoding with improved fallback handling
+     */
+    private function get_users_needing_geocoding($limit = 10)
+    {
+        global $wpdb;
+        
+        $address_sets = array(
+            '' => array('street' => 'mepr_clinic_street', 'city' => 'mepr_clinic_city', 'province' => 'mepr_clinic_province'),
+            '_2' => array('street' => 'mepr_clinic_street_2', 'city' => 'mepr_clinic_city_2', 'province' => 'mepr_clinic_province_2'),
+            '_3' => array('street' => 'mepr_clinic_street_3', 'city' => 'mepr_clinic_city_3', 'province' => 'mepr_clinic_province_3')
+        );
+        
+        $users_needing_geocoding = array();
+        
+        foreach ($address_sets as $suffix => $fields) {
+            if (count($users_needing_geocoding) >= $limit) {
+                break;
+            }
+            
+            // Get users with addresses but no coordinates
+            $users_with_addresses = $wpdb->get_results($wpdb->prepare("
+                SELECT DISTINCT user_id 
+                FROM {$wpdb->usermeta} 
+                WHERE meta_key = %s 
+                AND meta_value != '' 
+                LIMIT %d
+            ", $fields['street'], $limit));
+            
+            foreach ($users_with_addresses as $user_row) {
+                if (count($users_needing_geocoding) >= $limit) {
+                    break;
+                }
+                
+                $user_id = $user_row->user_id;
+                $existing_lat = get_user_meta($user_id, 'mepr_clinic_lat' . $suffix, true);
+                
+                // Check if coordinates are missing or invalid
+                if (empty($existing_lat) || floatval($existing_lat) == 0 || MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id)) {
+                    $users_needing_geocoding[] = array(
+                        'user_id' => $user_id,
+                        'suffix' => $suffix,
+                        'fields' => $fields
+                    );
+                }
+            }
+        }
+        
+        return $users_needing_geocoding;
+    }
+    
+    /**
+     * Geocode address with improved fallback handling for better results
+     */
+    private function geocode_address_with_improved_fallback($street, $city, $province)
+    {
+        // First try the original method
+        $result = MapGeocoder::geocode_address($street, $city, $province);
+        
+        if ($result) {
+            return $result;
+        }
+        
+        // Enhanced fallback strategies for better address handling
+        MapGeocoder::log_message("Trying enhanced fallback strategies for: street='{$street}', city='{$city}', province='{$province}'");
+        
+        // Strategy 1: Try city + province only if we have a city
+        if (!empty($city) && !empty($province)) {
+            $fallback_result = MapGeocoder::geocode_address('', $city, $province);
+            if ($fallback_result && $fallback_result['latitude'] != 0) {
+                // Mark as lower confidence since it's city-level
+                $fallback_result['confidence_score'] = max(30, ($fallback_result['confidence_score'] ?? 0) - 30);
+                $fallback_result['fallback_used'] = 'city_only';
+                MapGeocoder::log_message("Fallback successful using city-only: {$city}, {$province}");
+                return $fallback_result;
+            }
+        }
+        
+        // Strategy 2: Try just the city if no province match
+        if (!empty($city)) {
+            $fallback_result = MapGeocoder::geocode_address('', $city, '');
+            if ($fallback_result && $fallback_result['latitude'] != 0) {
+                // Mark as lower confidence
+                $fallback_result['confidence_score'] = max(20, ($fallback_result['confidence_score'] ?? 0) - 40);
+                $fallback_result['fallback_used'] = 'city_no_province';
+                MapGeocoder::log_message("Fallback successful using city without province: {$city}");
+                return $fallback_result;
+            }
+        }
+        
+        // Strategy 3: Try province only as last resort (but mark as very low confidence)
+        if (!empty($province)) {
+            $fallback_result = MapGeocoder::geocode_address('', '', $province);
+            if ($fallback_result && $fallback_result['latitude'] != 0) {
+                // Mark as very low confidence since it's province-level
+                $fallback_result['confidence_score'] = 10;
+                $fallback_result['fallback_used'] = 'province_only';
+                MapGeocoder::log_message("Fallback successful using province-only: {$province} (low confidence)");
+                return $fallback_result;
+            }
+        }
+        
+        MapGeocoder::log_message("All enhanced fallback strategies failed");
+        return false;
+    }
+
+    /**
+     * Get current bulk geocoding status
+     */
+    private function get_bulk_geocoding_status()
+    {
+        $status = get_transient('bulk_geocoding_status');
+        
+        if (!$status) {
+            return array(
+                'running' => false,
+                'total_processed' => 0,
+                'total_success' => 0,
+                'total_failed' => 0,
+                'progress_message' => 'Not running'
+            );
+        }
+        
+        // Check if process appears stuck (no updates for 5 minutes)
+        if ($status['running']) {
+            $last_update = isset($status['started_at']) ? $status['started_at'] : 0;
+            if (time() - $last_update > 300) {
+                $status['progress_message'] .= ' (Process may be stuck - click Stop and restart)';
+            }
+        }
+        
+        return $status;
     }
 
     /**

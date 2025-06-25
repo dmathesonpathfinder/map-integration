@@ -91,6 +91,129 @@
     display: none !important;
 }
 
+/* Clinic Listings Styles */
+.clinic-listings-container {
+    margin: 20px 0;
+}
+
+.clinic-group {
+    margin-bottom: 20px;
+}
+
+.clinic-group-multiple {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #f9f9f9;
+}
+
+.clinic-group-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.clinic-group-header .chiropractor-name {
+    margin: 0 0 5px 0;
+    color: #333;
+    font-size: 1.4em;
+}
+
+.multiple-locations-note {
+    margin: 0;
+    color: #666;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.clinic-listing {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.clinic-group-multiple .clinic-listing {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.clinic-listing:last-child {
+    margin-bottom: 0;
+}
+
+.chiropractor-name {
+    margin: 0 0 10px 0;
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #333;
+}
+
+.location-name {
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #555;
+}
+
+.clinic-link {
+    color: #0073aa;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.clinic-link:hover {
+    text-decoration: underline;
+    color: #005a87;
+}
+
+.clinic-address {
+    margin: 8px 0;
+    color: #666;
+    font-size: 0.95em;
+}
+
+.clinic-phone, .clinic-email, .clinic-website {
+    margin: 6px 0;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.clinic-email a, .clinic-website a {
+    color: #0073aa;
+    text-decoration: none;
+}
+
+.clinic-email a:hover, .clinic-website a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive adjustments for listings */
+@media (max-width: 768px) {
+    .clinic-group-multiple {
+        padding: 10px;
+    }
+    
+    .clinic-listing {
+        padding: 12px;
+    }
+    
+    .clinic-group-multiple .clinic-listing {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+    
+    .chiropractor-name {
+        font-size: 1.2em;
+    }
+    
+    .location-name {
+        font-size: 1.05em;
+    }
+}
+
 /* required styles */
 
 .leaflet-pane,
