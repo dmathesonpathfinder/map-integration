@@ -291,10 +291,31 @@ class MapGeocoder
         $lat_key = 'mepr_clinic_lat' . $suffix;
         $lng_key = 'mepr_clinic_lng' . $suffix;
         $time_key = 'mepr_clinic_geocoded_at' . $suffix;
+        $confidence_key = 'mepr_clinic_geo_confidence' . $suffix;
+        $fallback_key = 'mepr_clinic_geo_fallback' . $suffix;
 
-        update_user_meta($user_id, $lat_key, $coordinates['lat']);
-        update_user_meta($user_id, $lng_key, $coordinates['lng']);
+        // Handle both old format (lat/lng) and new format (latitude/longitude)
+        $lat = isset($coordinates['lat']) ? $coordinates['lat'] : 
+               (isset($coordinates['latitude']) ? $coordinates['latitude'] : null);
+        $lng = isset($coordinates['lng']) ? $coordinates['lng'] : 
+               (isset($coordinates['longitude']) ? $coordinates['longitude'] : null);
+
+        if ($lat === null || $lng === null) {
+            return false;
+        }
+
+        update_user_meta($user_id, $lat_key, $lat);
+        update_user_meta($user_id, $lng_key, $lng);
         update_user_meta($user_id, $time_key, current_time('mysql'));
+        
+        // Save additional metadata if available
+        if (isset($coordinates['confidence_score'])) {
+            update_user_meta($user_id, $confidence_key, $coordinates['confidence_score']);
+        }
+        
+        if (isset($coordinates['fallback_used'])) {
+            update_user_meta($user_id, $fallback_key, $coordinates['fallback_used']);
+        }
 
         return true;
     }
@@ -306,6 +327,9 @@ class MapGeocoder
     {
         $lat_key = 'mepr_clinic_lat' . $suffix;
         $lng_key = 'mepr_clinic_lng' . $suffix;
+        $confidence_key = 'mepr_clinic_geo_confidence' . $suffix;
+        $fallback_key = 'mepr_clinic_geo_fallback' . $suffix;
+        $time_key = 'mepr_clinic_geocoded_at' . $suffix;
 
         $lat = get_user_meta($user_id, $lat_key, true);
         $lng = get_user_meta($user_id, $lng_key, true);
@@ -314,10 +338,30 @@ class MapGeocoder
             return false;
         }
 
-        return array(
+        $result = array(
             'lat' => floatval($lat),
-            'lng' => floatval($lng)
+            'lng' => floatval($lng),
+            'latitude' => floatval($lat),
+            'longitude' => floatval($lng)
         );
+        
+        // Add additional metadata if available
+        $confidence = get_user_meta($user_id, $confidence_key, true);
+        if (!empty($confidence)) {
+            $result['confidence_score'] = intval($confidence);
+        }
+        
+        $fallback = get_user_meta($user_id, $fallback_key, true);
+        if (!empty($fallback)) {
+            $result['fallback_used'] = $fallback;
+        }
+        
+        $geocoded_at = get_user_meta($user_id, $time_key, true);
+        if (!empty($geocoded_at)) {
+            $result['geocoded_at'] = $geocoded_at;
+        }
+
+        return $result;
     }
 
     /**
@@ -567,37 +611,56 @@ class MapIntegration
             jQuery(document).ready(function($) {
                 var geocodingNonce = '<?php echo wp_create_nonce('bulk_geocoding_control'); ?>';
                 var statusCheckInterval;
+                var errorCount = 0;
                 
                 // Start geocoding
                 $('#start-geocoding').click(function() {
+                    var button = $(this);
+                    button.prop('disabled', true).text('Starting...');
+                    
                     $.post(ajaxurl, {
                         action: 'start_bulk_geocoding',
                         nonce: geocodingNonce
                     }, function(response) {
                         if (response.success) {
-                            $('#start-geocoding').prop('disabled', true);
                             $('#stop-geocoding').prop('disabled', false);
                             $('#status-indicator').text('Starting...');
                             startStatusUpdates();
+                            button.text('Start Bulk Geocoding');
                         } else {
                             alert('Error: ' + response.data);
+                            button.prop('disabled', false).text('Start Bulk Geocoding');
                         }
+                    }).fail(function() {
+                        alert('Network error occurred. Please try again.');
+                        button.prop('disabled', false).text('Start Bulk Geocoding');
                     });
                 });
                 
                 // Stop geocoding
                 $('#stop-geocoding').click(function() {
+                    if (!confirm('Are you sure you want to stop the geocoding process?')) {
+                        return;
+                    }
+                    
+                    var button = $(this);
+                    button.prop('disabled', true).text('Stopping...');
+                    
                     $.post(ajaxurl, {
                         action: 'stop_bulk_geocoding',
                         nonce: geocodingNonce
                     }, function(response) {
                         if (response.success) {
                             $('#start-geocoding').prop('disabled', false);
-                            $('#stop-geocoding').prop('disabled', true);
                             stopStatusUpdates();
+                            button.text('Stop Geocoding');
                         } else {
                             alert('Error: ' + response.data);
+                            button.prop('disabled', false).text('Stop Geocoding');
                         }
+                    }).fail(function() {
+                        alert('Network error occurred. Please try again.');
+                        button.prop('disabled', false).text('Stop Geocoding');
                     });
                 });
                 
@@ -628,6 +691,23 @@ class MapIntegration
                             if (!status.running && statusCheckInterval) {
                                 stopStatusUpdates();
                             }
+                            
+                            // Reset error count on successful update
+                            errorCount = 0;
+                        } else {
+                            console.error('Status update error:', response.data);
+                            errorCount++;
+                            if (errorCount > 3) {
+                                stopStatusUpdates();
+                                $('#progress-message').text('Error getting status - stopped monitoring');
+                            }
+                        }
+                    }).fail(function() {
+                        console.error('Network error during status update');
+                        errorCount++;
+                        if (errorCount > 3) {
+                            stopStatusUpdates();
+                            $('#progress-message').text('Network error - stopped monitoring');
                         }
                     });
                 }
@@ -1276,6 +1356,20 @@ class MapIntegration
      */
     private function start_background_geocoding()
     {
+        // Check for stale processes and clean them up
+        $status = get_transient('bulk_geocoding_status');
+        if ($status && $status['running']) {
+            // Check if it's been running too long without updates (over 5 minutes)
+            $last_update = isset($status['started_at']) ? $status['started_at'] : 0;
+            if (time() - $last_update > 300) {
+                MapGeocoder::log_message("Cleaning up stale geocoding process");
+                wp_clear_scheduled_hook('process_geocoding_batch');
+            } else {
+                MapGeocoder::log_message("Background geocoding is already running");
+                return;
+            }
+        }
+        
         // Initialize status
         $status = array(
             'running' => true,
@@ -1516,6 +1610,14 @@ class MapIntegration
                 'total_failed' => 0,
                 'progress_message' => 'Not running'
             );
+        }
+        
+        // Check if process appears stuck (no updates for 5 minutes)
+        if ($status['running']) {
+            $last_update = isset($status['started_at']) ? $status['started_at'] : 0;
+            if (time() - $last_update > 300) {
+                $status['progress_message'] .= ' (Process may be stuck - click Stop and restart)';
+            }
         }
         
         return $status;
