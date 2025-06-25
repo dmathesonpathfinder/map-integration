@@ -1099,8 +1099,6 @@ class MapIntegration
         
         return $output;
     }
-
-    /**
      * Handle user meta updates and trigger geocoding for clinic addresses
      */
     public function handle_user_meta_update($meta_id, $user_id, $meta_key, $meta_value)
