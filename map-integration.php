@@ -2185,7 +2185,7 @@ class MapIntegration
             'zoom' => '7',
             'show_avatar' => 'false',
             'show_contact' => 'true',
-            'sort_by' => 'name', // name, location_count, date_registered
+            'sort_by' => 'name', // name, last_name, city, location_count, date_registered
             'sort_order' => 'asc' // asc, desc
         ), $atts);
 
@@ -2258,6 +2258,8 @@ class MapIntegration
             $chiropractor_data = array(
                 'user_id' => $user->ID,
                 'display_name' => $user->display_name,
+                'first_name' => get_user_meta($user->ID, 'first_name', true),
+                'last_name' => get_user_meta($user->ID, 'last_name', true),
                 'user_email' => $user->user_email,
                 'date_registered' => $user->user_registered,
                 'locations' => array(),
@@ -2357,6 +2359,22 @@ class MapIntegration
             switch ($sort_by) {
                 case 'name':
                     $result = strcasecmp($a['display_name'], $b['display_name']);
+                    break;
+                case 'last_name':
+                    // Sort by last name, fall back to first name if last names are equal
+                    $result = strcasecmp($a['last_name'], $b['last_name']);
+                    if ($result === 0) {
+                        $result = strcasecmp($a['first_name'], $b['first_name']);
+                    }
+                    break;
+                case 'city':
+                    // Sort by city of first location, fall back to display name if cities are equal
+                    $city_a = !empty($a['locations']) ? $a['locations'][0]['city'] : '';
+                    $city_b = !empty($b['locations']) ? $b['locations'][0]['city'] : '';
+                    $result = strcasecmp($city_a, $city_b);
+                    if ($result === 0) {
+                        $result = strcasecmp($a['display_name'], $b['display_name']);
+                    }
                     break;
                 case 'location_count':
                     $result = count($a['locations']) - count($b['locations']);
