@@ -546,14 +546,22 @@ class Map_Integration_Street_Parser
      */
     private static function sanitize_component($component)
     {
-        // Remove potentially harmful characters
-        $component = preg_replace('/[<>"\']/', '', $component);
+        // Use WordPress sanitization
+        $component = sanitize_text_field($component);
+        
+        // Additional validation for address components
+        $component = preg_replace('/[^a-zA-Z0-9\s\-\.#]/', '', $component);
         
         // Trim whitespace
         $component = trim($component);
         
         // Limit length
         $component = substr($component, 0, 100);
+        
+        // Ensure it's not empty after sanitization
+        if (empty($component)) {
+            return '';
+        }
         
         return $component;
     }

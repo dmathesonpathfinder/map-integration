@@ -33,15 +33,116 @@ class MapGeocoder
 {
 
     private static $last_request_time = 0;
+    private static $rate_limits = array(
+        'google' => array(
+            'requests_per_second' => 10,
+            'last_request_time' => 0
+        ),
+        'nominatim' => array(
+            'requests_per_second' => 1,
+            'last_request_time' => 0
+        )
+    );
     /**
-     * Write to custom geocode log file
+     * Write to secure log file with proper security measures
      */
     public static function log_message($message)
     {
-        $log_file = MAP_INTEGRATION_PLUGIN_PATH . 'geocodelogs.txt';
+        // Use WordPress built-in logging when WP_DEBUG is enabled
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf('[Map Integration] %s', $message));
+        }
+        
+        // Alternative: Use WordPress uploads directory with proper security
+        $upload_dir = wp_upload_dir();
+        $log_dir = $upload_dir['basedir'] . '/map-integration-logs/';
+        
+        // Create directory if it doesn't exist
+        if (!file_exists($log_dir)) {
+            wp_mkdir_p($log_dir);
+            // Create .htaccess to prevent direct access
+            file_put_contents($log_dir . '.htaccess', "deny from all\n");
+        }
+        
+        $log_file = $log_dir . 'geocode-' . date('Y-m') . '.log';
         $timestamp = date('Y-m-d H:i:s');
         $log_entry = "[{$timestamp}] {$message}" . PHP_EOL;
-        file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
+        
+        // Validate file permissions and size
+        if (is_writable($log_dir) && (!file_exists($log_file) || filesize($log_file) < 10485760)) { // 10MB limit
+            file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
+        }
+    }
+
+    /**
+     * Validate address input comprehensively
+     * 
+     * @param string $address Address to validate
+     * @return string|false Sanitized address or false if invalid
+     */
+    private static function validate_address_input($address) {
+        // Basic sanitization
+        $address = sanitize_text_field($address);
+        
+        // Length validation
+        if (strlen($address) > 255) {
+            return false;
+        }
+        
+        // Pattern validation - basic address format
+        if (!preg_match('/^[a-zA-Z0-9\s,.\-#]+$/', $address)) {
+            return false;
+        }
+        
+        // Check for suspicious patterns
+        $suspicious_patterns = array(
+            '/script/i',
+            '/javascript/i',
+            '/eval\(/i',
+            '/expression\(/i'
+        );
+        
+        foreach ($suspicious_patterns as $pattern) {
+            if (preg_match($pattern, $address)) {
+                return false;
+            }
+        }
+        
+        return $address;
+    }
+
+    /**
+     * Enhanced rate limiting with enforcement
+     * 
+     * @param string $provider Provider name (google|nominatim)
+     * @return bool True if request should proceed, false if rate limit exceeded
+     */
+    private static function enforce_rate_limit($provider)
+    {
+        if (!isset(self::$rate_limits[$provider])) {
+            return true;
+        }
+        
+        $rate_limit = self::$rate_limits[$provider];
+        $min_interval = 1.0 / $rate_limit['requests_per_second'];
+        
+        $time_since_last = microtime(true) - $rate_limit['last_request_time'];
+        
+        if ($time_since_last < $min_interval) {
+            $sleep_time = $min_interval - $time_since_last;
+            
+            // Add maximum sleep time to prevent blocking
+            $max_sleep = 5.0; // 5 seconds maximum
+            if ($sleep_time > $max_sleep) {
+                self::log_message("Rate limit exceeded maximum wait time for provider: {$provider}");
+                return false; // Fail the request instead of blocking indefinitely
+            }
+            
+            usleep($sleep_time * 1000000);
+        }
+        
+        self::$rate_limits[$provider]['last_request_time'] = microtime(true);
+        return true;
     }
 
     /**
@@ -49,7 +150,17 @@ class MapGeocoder
      */
     public static function geocode_address($street, $city, $province)
     {
-        // Clean and normalize inputs
+        // Validate and clean inputs
+        $street = self::validate_address_input($street);
+        $city = self::validate_address_input($city);
+        $province = self::validate_address_input($province);
+        
+        if ($street === false || $city === false || $province === false) {
+            self::log_message("Invalid address input detected");
+            return false;
+        }
+        
+        // Additional cleaning and normalization
         $street = self::clean_address_part($street);
         $city = self::clean_address_part($city);
         $province = self::clean_address_part($province);
@@ -227,12 +338,11 @@ class MapGeocoder
      */
     private static function try_google_geocode($address, $api_key)
     {
-        // Rate limiting - Google allows more requests but let's be conservative
-        $current_time = time();
-        if ($current_time - self::$last_request_time < 0.1) {
-            usleep(100000); // 0.1 second delay
+        // Enhanced rate limiting enforcement
+        if (!self::enforce_rate_limit('google')) {
+            self::log_message("Google API rate limit exceeded for address: {$address}");
+            return false;
         }
-        self::$last_request_time = time();
 
         // Build Google Geocoding API request
         $url = 'https://maps.googleapis.com/maps/api/geocode/json?' . http_build_query(array(
@@ -251,8 +361,17 @@ class MapGeocoder
         ));
 
         if (is_wp_error($response)) {
+            $error_code = $response->get_error_code();
             $error_message = $response->get_error_message();
-            self::log_message("Google API request failed with WP_Error: {$error_message}");
+            
+            // Log detailed error for debugging
+            self::log_message("Google API request failed - Code: {$error_code}");
+            
+            // Don't expose detailed error messages to users
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                self::log_message("Debug - Error details: {$error_message}");
+            }
+            
             return false;
         }
 
@@ -342,12 +461,11 @@ class MapGeocoder
      */
     private static function try_nominatim_geocode($address)
     {
-        // Rate limiting - Nominatim allows 1 request per second
-        $current_time = time();
-        if ($current_time - self::$last_request_time < 1) {
-            sleep(1);
+        // Enhanced rate limiting enforcement
+        if (!self::enforce_rate_limit('nominatim')) {
+            self::log_message("Nominatim API rate limit exceeded for address: {$address}");
+            return false;
         }
-        self::$last_request_time = time();
 
         // Make API request
         $url = 'https://nominatim.openstreetmap.org/search?' . http_build_query(array(
@@ -367,8 +485,17 @@ class MapGeocoder
         ));
 
         if (is_wp_error($response)) {
+            $error_code = $response->get_error_code();
             $error_message = $response->get_error_message();
-            self::log_message("Nominatim API request failed with WP_Error: {$error_message}");
+            
+            // Log detailed error for debugging
+            self::log_message("Nominatim API request failed - Code: {$error_code}");
+            
+            // Don't expose detailed error messages to users
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                self::log_message("Debug - Error details: {$error_message}");
+            }
+            
             return false;
         }
 
@@ -611,6 +738,9 @@ class MapIntegration
         add_action('wp_ajax_start_bulk_geocoding', array($this, 'ajax_start_bulk_geocoding'));
         add_action('wp_ajax_stop_bulk_geocoding', array($this, 'ajax_stop_bulk_geocoding'));
         add_action('wp_ajax_get_bulk_geocoding_status', array($this, 'ajax_get_bulk_geocoding_status'));
+        
+        // Add security headers for admin pages
+        add_action('admin_init', array($this, 'add_security_headers'));
         
         // Add scheduled event handler for background processing
         add_action('process_geocoding_batch', array($this, 'process_geocoding_batch'));
@@ -1122,8 +1252,10 @@ class MapIntegration
         // Get all clinic locations with coordinates (filtered by user role)
         $clinic_data = $this->get_all_clinic_coordinates($atts['user_role']);
 
-        // Output clinic data to browser console for debugging
-        echo '<script>console.log("Clinic Data:", ' . json_encode($clinic_data) . ');</script>';
+        // Only output debug information in development environment
+        if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) {
+            echo '<script>console.log("Clinic Data:", ' . wp_json_encode($clinic_data) . ');</script>';
+        }
 
         // Generate unique map ID
         $map_id = 'map-integration-' . uniqid();
@@ -2164,8 +2296,18 @@ class MapIntegration
      */
     public function geocoding_tools_page()
     {
-        // Include the geocoding test partial
-        include MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
+        // Secure file inclusion with path validation
+        $include_file = MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
+        
+        // Validate file exists and is within plugin directory
+        $real_file = realpath($include_file);
+        $plugin_dir = realpath(MAP_INTEGRATION_PLUGIN_PATH);
+        
+        if ($real_file && $plugin_dir && strpos($real_file, $plugin_dir) === 0) {
+            include $include_file;
+        } else {
+            wp_die('Invalid file access attempt.');
+        }
     }
 
     /**
@@ -2583,6 +2725,17 @@ class MapIntegration
         MapGeocoder::log_message($message);
 
         echo '<div class="notice notice-success"><p>' . $message . '</p></div>';
+    }
+    
+    /**
+     * Add security headers for admin pages
+     */
+    public function add_security_headers() {
+        if (is_admin()) {
+            header('X-Content-Type-Options: nosniff');
+            header('X-Frame-Options: DENY');
+            header('Referrer-Policy: strict-origin-when-cross-origin');
+        }
     }
 }
 
