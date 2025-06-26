@@ -372,4 +372,31 @@
     color: white;
 }
 
+/* Custom Leaflet popup styling */
+.leaflet-popup-content {
+    font-family: "Neufreit", sans-serif;
+    color: #035088; /* CNS Primary Blue */
+    font-size: 15px;
+    line-height: 1.5;
+}
+.leaflet-popup-content h4 {
+    margin: 0 0 00!important;
+    font-size: 17px;
+    color: #035088;
+    font-weight: 700;
+}
+.leaflet-popup-content p {
+    margin: 0 0 0 0!important;
+}
+.leaflet-popup-content a {
+    color: #57c7df; /* CNS Accent Three */
+    text-decoration: underline;
+}
+.leaflet-popup-tip,
+.leaflet-popup-content-wrapper {
+    background: #e4f3f9; /* CNS Accent Four - Very light blue */
+    border-radius: 8px;
+    border: 1px solid #87d5f6;
+}
+
 /* End of file */
