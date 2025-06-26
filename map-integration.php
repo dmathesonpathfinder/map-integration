@@ -199,9 +199,148 @@ class MapGeocoder
     }
 
     /**
-     * Try geocoding a single address string
+     * Try geocoding a single address string using multiple providers
      */
     private static function try_geocode($address)
+    {
+        // Try Google Geocoding API first (if API key is available)
+        $google_api_key = get_option('map_integration_google_api_key', '');
+        if (!empty($google_api_key)) {
+            self::log_message("Trying Google Geocoding API first for: {$address}");
+            $google_result = self::try_google_geocode($address, $google_api_key);
+            if ($google_result) {
+                self::log_message("Google Geocoding successful");
+                return $google_result;
+            }
+            self::log_message("Google Geocoding failed, falling back to Nominatim");
+        } else {
+            self::log_message("No Google API key configured, using Nominatim only");
+        }
+        
+        // Fallback to Nominatim (OpenStreetMap)
+        self::log_message("Trying Nominatim for: {$address}");
+        return self::try_nominatim_geocode($address);
+    }
+    
+    /**
+     * Try geocoding using Google Geocoding API
+     */
+    private static function try_google_geocode($address, $api_key)
+    {
+        // Rate limiting - Google allows more requests but let's be conservative
+        $current_time = time();
+        if ($current_time - self::$last_request_time < 0.1) {
+            usleep(100000); // 0.1 second delay
+        }
+        self::$last_request_time = time();
+
+        // Build Google Geocoding API request
+        $url = 'https://maps.googleapis.com/maps/api/geocode/json?' . http_build_query(array(
+            'address' => $address,
+            'region' => 'ca', // Bias results to Canada
+            'key' => $api_key
+        ));
+
+        self::log_message("Making Google API request to: " . str_replace($api_key, '[API_KEY]', $url));
+
+        $response = wp_remote_get($url, array(
+            'timeout' => 10,
+            'headers' => array(
+                'User-Agent' => 'WordPress Map Integration Plugin'
+            )
+        ));
+
+        if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
+            self::log_message("Google API request failed with WP_Error: {$error_message}");
+            return false;
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_message = wp_remote_retrieve_response_message($response);
+        $body = wp_remote_retrieve_body($response);
+
+        self::log_message("Google API Response: Code {$response_code} - {$response_message}");
+
+        if ($response_code !== 200) {
+            self::log_message("Google API returned non-200 status. Response body: " . substr($body, 0, 500));
+            return false;
+        }
+
+        $data = json_decode($body, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            self::log_message("Google API JSON decode error: " . json_last_error_msg() . ". Raw response: " . substr($body, 0, 500));
+            return false;
+        }
+
+        // Check Google API response status
+        if (!isset($data['status'])) {
+            self::log_message("Google API missing status field");
+            return false;
+        }
+
+        if ($data['status'] !== 'OK') {
+            self::log_message("Google API returned status: " . $data['status']);
+            if (isset($data['error_message'])) {
+                self::log_message("Google API error message: " . $data['error_message']);
+            }
+            return false;
+        }
+
+        if (empty($data['results'])) {
+            self::log_message("Google API returned no results for address: {$address}");
+            return false;
+        }
+
+        $result_data = $data['results'][0];
+        if (!isset($result_data['geometry']['location'])) {
+            self::log_message("Google API result missing geometry/location data");
+            return false;
+        }
+
+        $location = $result_data['geometry']['location'];
+        $result = array(
+            'lat' => floatval($location['lat']),
+            'lng' => floatval($location['lng']),
+            'provider' => 'google'
+        );
+
+        // Add confidence information based on location type
+        if (isset($result_data['geometry']['location_type'])) {
+            $location_type = $result_data['geometry']['location_type'];
+            switch ($location_type) {
+                case 'ROOFTOP':
+                    $result['confidence_score'] = 100;
+                    break;
+                case 'RANGE_INTERPOLATED':
+                    $result['confidence_score'] = 90;
+                    break;
+                case 'GEOMETRIC_CENTER':
+                    $result['confidence_score'] = 70;
+                    break;
+                case 'APPROXIMATE':
+                    $result['confidence_score'] = 50;
+                    break;
+                default:
+                    $result['confidence_score'] = 80;
+            }
+        }
+
+        // Log additional details about the result
+        $formatted_address = isset($result_data['formatted_address']) ? $result_data['formatted_address'] : 'N/A';
+        $place_types = isset($result_data['types']) ? implode(', ', $result_data['types']) : 'N/A';
+        $location_type = isset($result_data['geometry']['location_type']) ? $result_data['geometry']['location_type'] : 'N/A';
+        
+        self::log_message("Google geocoding successful: lat={$result['lat']}, lng={$result['lng']}, formatted_address='{$formatted_address}', location_type='{$location_type}', types='{$place_types}'");
+
+        return $result;
+    }
+    
+    /**
+     * Try geocoding using Nominatim (OpenStreetMap)
+     */
+    private static function try_nominatim_geocode($address)
     {
         // Rate limiting - Nominatim allows 1 request per second
         $current_time = time();
@@ -218,10 +357,7 @@ class MapGeocoder
             'countrycodes' => 'ca'
         ));
 
-        self::log_message("Making API request to: {$url}");
-
-        // Log the exact GET request URL
-        self::log_message("Geocoding GET request: {$url}");
+        self::log_message("Making Nominatim API request to: {$url}");
 
         $response = wp_remote_get($url, array(
             'timeout' => 10,
@@ -232,7 +368,7 @@ class MapGeocoder
 
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
-            self::log_message("API request failed with WP_Error: {$error_message}");
+            self::log_message("Nominatim API request failed with WP_Error: {$error_message}");
             return false;
         }
 
@@ -240,41 +376,58 @@ class MapGeocoder
         $response_message = wp_remote_retrieve_response_message($response);
         $body = wp_remote_retrieve_body($response);
 
-        self::log_message("API Response: Code {$response_code} - {$response_message}");
+        self::log_message("Nominatim API Response: Code {$response_code} - {$response_message}");
 
         if ($response_code !== 200) {
-            self::log_message("API returned non-200 status. Response body: " . substr($body, 0, 500));
+            self::log_message("Nominatim API returned non-200 status. Response body: " . substr($body, 0, 500));
             return false;
         }
 
         $data = json_decode($body, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            self::log_message("JSON decode error: " . json_last_error_msg() . ". Raw response: " . substr($body, 0, 500));
+            self::log_message("Nominatim JSON decode error: " . json_last_error_msg() . ". Raw response: " . substr($body, 0, 500));
             return false;
         }
 
-        self::log_message("API returned " . count($data) . " results");
+        self::log_message("Nominatim returned " . count($data) . " results");
 
         if (empty($data)) {
-            self::log_message("No geocoding results found for address: {$address}");
+            self::log_message("No Nominatim results found for address: {$address}");
             return false;
         }
 
         if (!isset($data[0]['lat']) || !isset($data[0]['lon'])) {
-            self::log_message("Invalid result structure. First result: " . json_encode($data[0]));
+            self::log_message("Invalid Nominatim result structure. First result: " . json_encode($data[0]));
             return false;
         }
 
         $result = array(
             'lat' => floatval($data[0]['lat']),
-            'lng' => floatval($data[0]['lon'])
+            'lng' => floatval($data[0]['lon']),
+            'provider' => 'nominatim'
         );
+
+        // Add confidence based on result class and type
+        if (isset($data[0]['class']) && isset($data[0]['type'])) {
+            $class = $data[0]['class'];
+            $type = $data[0]['type'];
+            
+            if ($class === 'place' && in_array($type, ['house', 'building'])) {
+                $result['confidence_score'] = 95;
+            } elseif ($class === 'highway' || $class === 'place') {
+                $result['confidence_score'] = 80;
+            } else {
+                $result['confidence_score'] = 60;
+            }
+        } else {
+            $result['confidence_score'] = 70;
+        }
 
         // Log additional details about the result
         $display_name = isset($data[0]['display_name']) ? $data[0]['display_name'] : 'N/A';
         $place_type = isset($data[0]['type']) ? $data[0]['type'] : 'N/A';
-        self::log_message("Geocoding successful: lat={$result['lat']}, lng={$result['lng']}, display_name='{$display_name}', type='{$place_type}'");
+        self::log_message("Nominatim geocoding successful: lat={$result['lat']}, lng={$result['lng']}, display_name='{$display_name}', type='{$place_type}'");
 
         return $result;
     }
@@ -293,6 +446,7 @@ class MapGeocoder
         $time_key = 'mepr_clinic_geocoded_at' . $suffix;
         $confidence_key = 'mepr_clinic_geo_confidence' . $suffix;
         $fallback_key = 'mepr_clinic_geo_fallback' . $suffix;
+        $provider_key = 'mepr_clinic_geo_provider' . $suffix;
 
         // Handle both old format (lat/lng) and new format (latitude/longitude)
         $lat = isset($coordinates['lat']) ? $coordinates['lat'] : 
@@ -308,6 +462,8 @@ class MapGeocoder
         update_user_meta($user_id, $lng_key, $lng);
         update_user_meta($user_id, $time_key, current_time('mysql'));
         
+        MapGeocoder::log_message("Saved coordinates for user {$user_id} (suffix: {$suffix}): lat={$lat}, lng={$lng}");
+        
         // Save additional metadata if available
         if (isset($coordinates['confidence_score'])) {
             update_user_meta($user_id, $confidence_key, $coordinates['confidence_score']);
@@ -315,6 +471,10 @@ class MapGeocoder
         
         if (isset($coordinates['fallback_used'])) {
             update_user_meta($user_id, $fallback_key, $coordinates['fallback_used']);
+        }
+        
+        if (isset($coordinates['provider'])) {
+            update_user_meta($user_id, $provider_key, $coordinates['provider']);
         }
 
         return true;
@@ -329,6 +489,7 @@ class MapGeocoder
         $lng_key = 'mepr_clinic_lng' . $suffix;
         $confidence_key = 'mepr_clinic_geo_confidence' . $suffix;
         $fallback_key = 'mepr_clinic_geo_fallback' . $suffix;
+        $provider_key = 'mepr_clinic_geo_provider' . $suffix;
         $time_key = 'mepr_clinic_geocoded_at' . $suffix;
 
         $lat = get_user_meta($user_id, $lat_key, true);
@@ -360,6 +521,11 @@ class MapGeocoder
         if (!empty($geocoded_at)) {
             $result['geocoded_at'] = $geocoded_at;
         }
+        
+        $provider = get_user_meta($user_id, $provider_key, true);
+        if (!empty($provider)) {
+            $result['provider'] = $provider;
+        }
 
         return $result;
     }
@@ -371,15 +537,38 @@ class MapGeocoder
     {
         $lng = get_user_meta($user_id, 'mepr_clinic_lng' . $suffix, true);
 
+        // Check if recently geocoded (within last hour) - don't re-geocode
+        $geocoded_at = get_user_meta($user_id, 'mepr_clinic_geocoded_at' . $suffix, true);
+        if (!empty($geocoded_at)) {
+            $geocoded_time = strtotime($geocoded_at);
+            if ($geocoded_time && (time() - $geocoded_time) < 3600) { // 1 hour
+                return false; // Recently geocoded, don't re-process
+            }
+        }
+
+        // Check confidence score - if we have high confidence, don't re-geocode
+        $confidence = get_user_meta($user_id, 'mepr_clinic_geo_confidence' . $suffix, true);
+        if (!empty($confidence) && intval($confidence) >= 80) {
+            return false; // High confidence coordinates should not be re-geocoded
+        }
+
+        // Check provider - Google and high-quality Nominatim results should not be re-geocoded
+        $provider = get_user_meta($user_id, 'mepr_clinic_geo_provider' . $suffix, true);
+        if ($provider === 'google') {
+            return false; // Google results are typically high quality
+        }
+
         // Nova Scotia province center coordinates (approximate)
         $ns_lat = 44.6820;
         $ns_lng = -63.7443;
 
         // If coordinates are very close to province center, consider them too general
+        // Use much tighter threshold - only coordinates within ~5km of province center
         $lat_diff = abs(floatval($lat) - $ns_lat);
         $lng_diff = abs(floatval($lng) - $ns_lng);
 
-        return ($lat_diff < 0.5 && $lng_diff < 0.5);
+        // 0.05 degrees is roughly 5km - much more specific than the previous 0.5 degrees (~55km)
+        return ($lat_diff < 0.05 && $lng_diff < 0.05);
     }
 }
 
@@ -527,7 +716,11 @@ class MapIntegration
                         <td>
                             <input type="text" name="google_api_key" class="regular-text" 
                                    value="<?php echo esc_attr(get_option('map_integration_google_api_key', '')); ?>" />
-                            <p class="description">Optional: Enter your Google Maps API key to enable Google geocoding as a fallback provider.</p>
+                            <p class="description">
+                                <strong>Google Geocoding API Key:</strong> If provided, Google will be used as the primary geocoding provider with Nominatim (OpenStreetMap) as fallback. 
+                                Google provides more accurate results but requires an API key. 
+                                <a href="https://developers.google.com/maps/documentation/geocoding/get-api-key" target="_blank">Get your API key here</a>.
+                            </p>
                         </td>
                     </tr>
                 </table>
@@ -562,12 +755,23 @@ class MapIntegration
                     <td><strong>Users with Third Coordinates:</strong></td>
                     <td><?php echo $stats['third_coordinates']; ?></td>
                 </tr>
+                <tr style="border-top: 2px solid #ddd;">
+                    <td><strong>Geocoded by Google:</strong></td>
+                    <td><?php echo $stats['google_geocoded']; ?></td>
+                </tr>
+                <tr>
+                    <td><strong>Geocoded by Nominatim:</strong></td>
+                    <td><?php echo $stats['nominatim_geocoded']; ?></td>
+                </tr>
             </table>
 
             <h2>Addresses Not Geocoded</h2>
             <?php
             $non_geocoded = $this->get_non_geocoded_addresses();
-            if (!empty($non_geocoded)): ?>
+            $non_geocoded_count = count($non_geocoded);
+            ?>
+            <p><strong>Total non-geocoded addresses: <?php echo $non_geocoded_count; ?></strong></p>
+            <?php if (!empty($non_geocoded)): ?>
                 <table class="widefat">
                     <thead>
                         <tr>
@@ -593,7 +797,7 @@ class MapIntegration
                     </tbody>
                 </table>
             <?php else: ?>
-                <p>All addresses have been geocoded.</p>
+                <p>✅ All addresses have been geocoded successfully!</p>
             <?php endif; ?>
 
             <h2>Interactive Bulk Geocoding</h2>
@@ -1260,6 +1464,21 @@ class MapIntegration
             WHERE meta_key = 'mepr_clinic_lat_3' AND meta_value != ''
         ");
 
+        // Count geocoding providers
+        $stats['google_geocoded'] = $wpdb->get_var("
+            SELECT COUNT(DISTINCT user_id) 
+            FROM {$wpdb->usermeta} 
+            WHERE meta_key IN ('mepr_clinic_geo_provider', 'mepr_clinic_geo_provider_2', 'mepr_clinic_geo_provider_3') 
+            AND meta_value = 'google'
+        ");
+
+        $stats['nominatim_geocoded'] = $wpdb->get_var("
+            SELECT COUNT(DISTINCT user_id) 
+            FROM {$wpdb->usermeta} 
+            WHERE meta_key IN ('mepr_clinic_geo_provider', 'mepr_clinic_geo_provider_2', 'mepr_clinic_geo_provider_3') 
+            AND meta_value = 'nominatim'
+        ");
+
         return $stats;
     }
     /**
@@ -1285,33 +1504,48 @@ class MapIntegration
             $province_key = 'mepr_clinic_province' . $suffix;
             $lat_key = 'mepr_clinic_lat' . $suffix;
 
-            // Get users with address but no coordinates
+            // Get users with address data
             $users = $wpdb->get_results($wpdb->prepare("
-                SELECT u.ID, u.display_name
+                SELECT DISTINCT u.ID, u.display_name
                 FROM {$wpdb->users} u
                 INNER JOIN {$wpdb->usermeta} um ON u.ID = um.user_id
-                WHERE um.meta_key = %s AND um.meta_value != ''
-                AND NOT EXISTS (
-                    SELECT 1 FROM {$wpdb->usermeta} um2 
-                    WHERE um2.user_id = u.ID AND um2.meta_key = %s AND um2.meta_value != ''
+                WHERE (um.meta_key = %s OR um.meta_key = %s) AND um.meta_value != ''
+                AND u.ID NOT IN (
+                    SELECT user_id FROM {$wpdb->usermeta} 
+                    WHERE meta_key = %s AND meta_value != ''
                 )
-            ", $street_key, $lat_key));
+            ", $street_key, $city_key, 'mepr_clinic_geocode_failed' . $suffix));
 
             foreach ($users as $user) {
                 $street = get_user_meta($user->ID, $street_key, true);
                 $city = get_user_meta($user->ID, $city_key, true);
                 $province = get_user_meta($user->ID, $province_key, true);
+                $lat = get_user_meta($user->ID, $lat_key, true);
+                $lng = get_user_meta($user->ID, 'mepr_clinic_lng' . $suffix, true);
 
                 // Only include addresses with street or city data (exclude province-only)
                 if (!empty($street) || !empty($city)) {
-                    $non_geocoded[] = array(
-                        'user_id' => $user->ID,
-                        'user_name' => $user->display_name,
-                        'type' => $label,
-                        'street' => $street,
-                        'city' => $city,
-                        'province' => $province
-                    );
+                    // Use the same logic as our background geocoding to determine if coordinates are needed
+                    $needs_geocoding = false;
+                    
+                    if (empty($lat) || empty($lng) || floatval($lat) == 0 || floatval($lng) == 0) {
+                        // No coordinates or invalid coordinates
+                        $needs_geocoding = true;
+                    } elseif (MapGeocoder::is_province_level_coordinate($lat, $suffix, $user->ID)) {
+                        // Province-level coordinates that need improvement
+                        $needs_geocoding = true;
+                    }
+                    
+                    if ($needs_geocoding) {
+                        $non_geocoded[] = array(
+                            'user_id' => $user->ID,
+                            'user_name' => $user->display_name,
+                            'type' => $label,
+                            'street' => $street,
+                            'city' => $city,
+                            'province' => $province
+                        );
+                    }
                 }
             }
         }
@@ -1333,12 +1567,21 @@ class MapIntegration
             'mepr_clinic_lat',
             'mepr_clinic_lng',
             'mepr_clinic_geocoded_at',
+            'mepr_clinic_geo_confidence',
+            'mepr_clinic_geo_fallback',
+            'mepr_clinic_geo_provider',
             'mepr_clinic_lat_2',
             'mepr_clinic_lng_2',
             'mepr_clinic_geocoded_at_2',
+            'mepr_clinic_geo_confidence_2',
+            'mepr_clinic_geo_fallback_2',
+            'mepr_clinic_geo_provider_2',
             'mepr_clinic_lat_3',
             'mepr_clinic_lng_3',
-            'mepr_clinic_geocoded_at_3'
+            'mepr_clinic_geocoded_at_3',
+            'mepr_clinic_geo_confidence_3',
+            'mepr_clinic_geo_fallback_3',
+            'mepr_clinic_geo_provider_3'
         );
 
         $total_deleted = 0;
@@ -1672,6 +1915,19 @@ class MapIntegration
             $city = get_user_meta($user_id, $fields['city'], true);
             $province = get_user_meta($user_id, $fields['province'], true);
             
+            // Check if coordinates already exist
+            $existing_lat = get_user_meta($user_id, 'mepr_clinic_lat' . $suffix, true);
+            $existing_lng = get_user_meta($user_id, 'mepr_clinic_lng' . $suffix, true);
+            
+            if (!empty($existing_lat) && !empty($existing_lng) && floatval($existing_lat) != 0 && floatval($existing_lng) != 0) {
+                // Skip if coordinates already exist and aren't province-level
+                if (!MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id)) {
+                    MapGeocoder::log_message("Background processing: User {$user_id} already has valid coordinates for suffix '{$suffix}', skipping");
+                    $status['total_processed']++;
+                    continue;
+                }
+            }
+            
             MapGeocoder::log_message("Background processing user {$user_id}: street='{$street}', city='{$city}', province='{$province}'");
             
             // Only geocode if we have street or city data
@@ -1754,12 +2010,18 @@ class MapIntegration
                 
                 $user_id = $user_row->user_id;
                 
-                // Double-check that this user actually has address data
+                // Double-check that this user actually has address data AND doesn't have valid coordinates
                 $street = get_user_meta($user_id, $street_key, true);
                 $city = get_user_meta($user_id, $city_key, true);
                 
-                // Only include if they have street or city data (not just province)
-                if (!empty($street) || !empty($city)) {
+                // Also double-check coordinates aren't already present
+                $existing_lat = get_user_meta($user_id, $lat_key, true);
+                $existing_lng = get_user_meta($user_id, 'mepr_clinic_lng' . $suffix, true);
+                
+                // Only include if they have street or city data (not just province) AND no valid coordinates
+                if ((!empty($street) || !empty($city)) && 
+                    (empty($existing_lat) || empty($existing_lng) || floatval($existing_lat) == 0 || floatval($existing_lng) == 0 ||
+                     MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id))) {
                     $users_needing_geocoding[] = array(
                         'user_id' => $user_id,
                         'suffix' => $suffix,
@@ -1767,6 +2029,8 @@ class MapIntegration
                     );
                     
                     MapGeocoder::log_message("Added user {$user_id} (suffix: {$suffix}) to geocoding queue - no coordinates found");
+                } else {
+                    MapGeocoder::log_message("Skipped user {$user_id} (suffix: {$suffix}) - already has valid coordinates or no address data");
                 }
             }
             
