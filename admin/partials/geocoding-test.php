@@ -219,15 +219,15 @@ $cache_stats = get_geocoding_cache_stats();
                     <script>
                     jQuery(document).ready(function($) {
                         if (typeof L !== 'undefined') {
-                            var map = L.map('test-map').setView([<?php echo $test_result['latitude']; ?>, <?php echo $test_result['longitude']; ?>], 15);
+                            var map = L.map('test-map').setView([<?php echo floatval($test_result['latitude']); ?>, <?php echo floatval($test_result['longitude']); ?>], 15);
                             
                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                                 attribution: '© OpenStreetMap contributors'
                             }).addTo(map);
                             
-                            L.marker([<?php echo $test_result['latitude']; ?>, <?php echo $test_result['longitude']; ?>])
+                            L.marker([<?php echo floatval($test_result['latitude']); ?>, <?php echo floatval($test_result['longitude']); ?>])
                                 .addTo(map)
-                                .bindPopup('<?php echo esc_js($test_result['display_name']); ?>')
+                                .bindPopup(<?php echo wp_json_encode(esc_html($test_result['display_name'])); ?>)
                                 .openPopup();
                         } else {
                             $('#test-map').html('<p>Map preview requires Leaflet.js to be loaded.</p>');
@@ -247,13 +247,13 @@ $cache_stats = get_geocoding_cache_stats();
                     <tbody>
                         <tr>
                             <td><strong>Total Entries</strong></td>
-                            <td><?php echo number_format($cache_stats['total_entries']); ?></td>
+                            <td><?php echo esc_html(number_format($cache_stats['total_entries'])); ?></td>
                         </tr>
                         <?php if (!empty($cache_stats['providers'])): ?>
                             <?php foreach ($cache_stats['providers'] as $provider => $count): ?>
                             <tr>
                                 <td><strong><?php echo esc_html(ucfirst($provider)); ?> Entries</strong></td>
-                                <td><?php echo number_format($count); ?></td>
+                                <td><?php echo esc_html(number_format($count)); ?></td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>

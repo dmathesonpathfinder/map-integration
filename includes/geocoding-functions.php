@@ -371,13 +371,32 @@ function get_users_needing_geocoding($limit = 100) {
     
     foreach ($address_sets as $suffix => $fields) {
         // Find users with addresses but missing coordinates
-        $users_with_addresses = $wpdb->get_results($wpdb->prepare("
+        // Use separate queries to avoid SQL injection issues with IN clause
+        $users_with_street = $wpdb->get_results($wpdb->prepare("
             SELECT DISTINCT user_id 
             FROM {$wpdb->usermeta} 
-            WHERE meta_key IN (%s, %s) 
+            WHERE meta_key = %s 
             AND meta_value != ''
             LIMIT %d
-        ", $fields['street'], $fields['city'], $limit), ARRAY_A);
+        ", $fields['street'], $limit), ARRAY_A);
+        
+        $users_with_city = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT user_id 
+            FROM {$wpdb->usermeta} 
+            WHERE meta_key = %s 
+            AND meta_value != ''
+            LIMIT %d
+        ", $fields['city'], $limit), ARRAY_A);
+        
+        // Merge and deduplicate user IDs
+        $all_user_ids = array();
+        foreach ($users_with_street as $user) {
+            $all_user_ids[$user['user_id']] = $user;
+        }
+        foreach ($users_with_city as $user) {
+            $all_user_ids[$user['user_id']] = $user;
+        }
+        $users_with_addresses = array_values($all_user_ids);
         
         foreach ($users_with_addresses as $user_row) {
             $user_id = $user_row['user_id'];

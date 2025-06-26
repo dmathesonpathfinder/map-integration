@@ -38,9 +38,25 @@ class MapGeocoder
      */
     public static function log_message($message)
     {
-        $log_file = MAP_INTEGRATION_PLUGIN_PATH . 'geocodelogs.txt';
+        // Use WordPress uploads directory which is safer than plugin directory
+        $upload_dir = wp_upload_dir();
+        $log_file = $upload_dir['basedir'] . '/map-integration-logs/geocodelogs.txt';
+        
+        // Create directory if it doesn't exist
+        $log_dir = dirname($log_file);
+        if (!file_exists($log_dir)) {
+            wp_mkdir_p($log_dir);
+            // Add .htaccess to prevent direct access
+            $htaccess_content = "Order deny,allow\nDeny from all\n";
+            file_put_contents($log_dir . '/.htaccess', $htaccess_content);
+        }
+        
+        // Sanitize log message to prevent log injection
+        $message = preg_replace('/[\r\n]/', ' ', $message);
+        $message = substr($message, 0, 1000); // Limit message length
+        
         $timestamp = date('Y-m-d H:i:s');
-        $log_entry = "[{$timestamp}] {$message}" . PHP_EOL;
+        $log_entry = "[{$timestamp}] " . esc_html($message) . PHP_EOL;
         file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
     }
 
@@ -540,27 +556,27 @@ class MapIntegration
             <table class="widefat">
                 <tr>
                     <td><strong>Users with Primary Address:</strong></td>
-                    <td><?php echo $stats['primary_addresses']; ?></td>
+                    <td><?php echo esc_html($stats['primary_addresses']); ?></td>
                 </tr>
                 <tr>
                     <td><strong>Users with Primary Coordinates:</strong></td>
-                    <td><?php echo $stats['primary_coordinates']; ?></td>
+                    <td><?php echo esc_html($stats['primary_coordinates']); ?></td>
                 </tr>
                 <tr>
                     <td><strong>Users with Secondary Address:</strong></td>
-                    <td><?php echo $stats['secondary_addresses']; ?></td>
+                    <td><?php echo esc_html($stats['secondary_addresses']); ?></td>
                 </tr>
                 <tr>
                     <td><strong>Users with Secondary Coordinates:</strong></td>
-                    <td><?php echo $stats['secondary_coordinates']; ?></td>
+                    <td><?php echo esc_html($stats['secondary_coordinates']); ?></td>
                 </tr>
                 <tr>
                     <td><strong>Users with Third Address:</strong></td>
-                    <td><?php echo $stats['third_addresses']; ?></td>
+                    <td><?php echo esc_html($stats['third_addresses']); ?></td>
                 </tr>
                 <tr>
                     <td><strong>Users with Third Coordinates:</strong></td>
-                    <td><?php echo $stats['third_coordinates']; ?></td>
+                    <td><?php echo esc_html($stats['third_coordinates']); ?></td>
                 </tr>
             </table>
 
@@ -617,7 +633,7 @@ class MapIntegration
             
             <script>
             jQuery(document).ready(function($) {
-                var geocodingNonce = '<?php echo wp_create_nonce('bulk_geocoding_control'); ?>';
+                var geocodingNonce = <?php echo wp_json_encode(wp_create_nonce('bulk_geocoding_control')); ?>;
                 var statusCheckInterval;
                 var errorCount = 0;
                 
@@ -1534,8 +1550,8 @@ class MapIntegration
             wp_send_json_error('Insufficient permissions');
         }
         
-        // Check nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+        // Check nonce - fix: check for POST data existence first
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['nonce']), 'bulk_geocoding_control')) {
             wp_send_json_error('Invalid nonce');
         }
         
@@ -1555,8 +1571,8 @@ class MapIntegration
             wp_send_json_error('Insufficient permissions');
         }
         
-        // Check nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+        // Check nonce - fix: check for POST data existence first
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['nonce']), 'bulk_geocoding_control')) {
             wp_send_json_error('Invalid nonce');
         }
         
@@ -1901,7 +1917,13 @@ class MapIntegration
     public function geocoding_tools_page()
     {
         // Include the geocoding test partial
-        include MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
+        // Include the admin page template - using hardcoded path for security
+        $admin_page_path = MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
+        if (file_exists($admin_page_path)) {
+            include $admin_page_path;
+        } else {
+            echo '<div class="notice notice-error"><p>Admin page template not found.</p></div>';
+        }
     }
 
     /**
