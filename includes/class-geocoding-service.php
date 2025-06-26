@@ -630,27 +630,30 @@ class Map_Integration_Geocoding_Service
         
         $table_name = $wpdb->prefix . self::$cache_table;
         
-        $where = array();
-        $where_values = array();
+        // Validate table name exists
+        $valid_tables = array($wpdb->prefix . self::$cache_table);
+        if (!in_array($table_name, $valid_tables)) {
+            self::log_message("Invalid table name attempted: " . $table_name);
+            return 0;
+        }
         
+        // Use WordPress methods for better security
         if (!empty($options['older_than'])) {
             $cutoff_date = date('Y-m-d H:i:s', time() - $options['older_than']);
-            $where[] = 'created_at < %s';
-            $where_values[] = $cutoff_date;
-        }
-        
-        if (!empty($options['provider'])) {
-            $where[] = 'provider = %s';
-            $where_values[] = $options['provider'];
-        }
-        
-        $query = "DELETE FROM {$table_name}";
-        if (!empty($where)) {
-            $query .= ' WHERE ' . implode(' AND ', $where);
-        }
-        
-        if (!empty($where_values)) {
-            $query = $wpdb->prepare($query, $where_values);
+            $where_conditions = array('created_at < %s');
+            $where_values = array($cutoff_date);
+            
+            if (!empty($options['provider'])) {
+                $where_conditions[] = 'provider = %s';
+                $where_values[] = $options['provider'];
+            }
+            
+            $query = $wpdb->prepare(
+                "DELETE FROM {$table_name} WHERE " . implode(' AND ', $where_conditions),
+                $where_values
+            );
+        } else {
+            $query = "DELETE FROM {$table_name}";
         }
         
         $deleted = $wpdb->query($query);
