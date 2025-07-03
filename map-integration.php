@@ -2470,7 +2470,14 @@ class MapIntegration
      */
     private function render_chiropractor_listing($chiropractor, $atts)
     {
-        $output = '<div class="chiro-listing" data-user-id="' . esc_attr($chiropractor['user_id']) . '">';
+        // Add data attributes for sorting
+        $first_city = !empty($chiropractor['locations']) ? $chiropractor['locations'][0]['city'] : '';
+
+        $output = '<div class="chiro-listing" data-user-id="' . esc_attr($chiropractor['user_id']) . '"';
+        $output .= ' data-last-name="' . esc_attr($chiropractor['last_name']) . '"';
+        $output .= ' data-first-name="' . esc_attr($chiropractor['first_name']) . '"';
+        $output .= ' data-city="' . esc_attr($first_city) . '"';
+        $output .= '>';
 
         // Header with basic info
         $output .= '<div class="chiro-header">';

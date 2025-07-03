@@ -67,42 +67,46 @@
                 switch (sortBy) {
 
                     case 'last_name':
-                        // Extract last name from full name (assume format: "First Last" or "First Middle Last")
-                        var nameA = $a.find('.chiro-name').text().trim();
-                        var nameB = $b.find('.chiro-name').text().trim();
-                        var lastNameA = nameA.split(' ').pop();
-                        var lastNameB = nameB.split(' ').pop();
+                        // Use data attributes for consistent sorting with PHP
+                        var lastNameA = $a.attr('data-last-name') || '';
+                        var lastNameB = $b.attr('data-last-name') || '';
                         result = lastNameA.localeCompare(lastNameB);
                         if (result === 0) {
-                            result = nameA.localeCompare(nameB); // Fallback to full name
+                            // Fallback to first name
+                            var firstNameA = $a.attr('data-first-name') || '';
+                            var firstNameB = $b.attr('data-first-name') || '';
+                            result = firstNameA.localeCompare(firstNameB);
                         }
                         break;
 
                     case 'city':
-                        var cityA = $a.find('.location-address').first().text().trim();
-                        var cityB = $b.find('.location-address').first().text().trim();
-                        // Extract city (assume format: "Street, City, Province")
-                        var cityPartsA = cityA.split(',');
-                        var cityPartsB = cityB.split(',');
-                        var extractedCityA = cityPartsA.length > 1 ? cityPartsA[1].trim() : cityA;
-                        var extractedCityB = cityPartsB.length > 1 ? cityPartsB[1].trim() : cityB;
-                        result = extractedCityA.localeCompare(extractedCityB);
+                        // Use data attributes for consistent sorting with PHP
+                        var cityA = $a.attr('data-city') || '';
+                        var cityB = $b.attr('data-city') || '';
+                        result = cityA.localeCompare(cityB);
                         if (result === 0) {
-                            var nameA = $a.find('.chiro-name').text().trim();
-                            var nameB = $b.find('.chiro-name').text().trim();
-                            result = nameA.localeCompare(nameB); // Fallback to name
+                            // Fallback to last name, then first name
+                            var lastNameA = $a.attr('data-last-name') || '';
+                            var lastNameB = $b.attr('data-last-name') || '';
+                            result = lastNameA.localeCompare(lastNameB);
+                            if (result === 0) {
+                                var firstNameA = $a.attr('data-first-name') || '';
+                                var firstNameB = $b.attr('data-first-name') || '';
+                                result = firstNameA.localeCompare(firstNameB);
+                            }
                         }
                         break;
 
                     default:
-                        // Default to last name sorting
-                        var nameA = $a.find('.chiro-name').text().trim();
-                        var nameB = $b.find('.chiro-name').text().trim();
-                        var lastNameA = nameA.split(' ').pop();
-                        var lastNameB = nameB.split(' ').pop();
+                        // Default to last name sorting using data attributes
+                        var lastNameA = $a.attr('data-last-name') || '';
+                        var lastNameB = $b.attr('data-last-name') || '';
                         result = lastNameA.localeCompare(lastNameB);
                         if (result === 0) {
-                            result = nameA.localeCompare(nameB); // Fallback to full name
+                            // Fallback to first name
+                            var firstNameA = $a.attr('data-first-name') || '';
+                            var firstNameB = $b.attr('data-first-name') || '';
+                            result = firstNameA.localeCompare(firstNameB);
                         }
                 }
 
@@ -114,13 +118,11 @@
             $container.empty();
 
             if (sortBy === 'city') {
-                // Group by city and add headings
+                // Group by city and add headings using data attributes
                 var currentCity = '';
                 $.each(listingsArray, function (index, element) {
                     var $element = $(element);
-                    var cityAddress = $element.find('.location-address').first().text().trim();
-                    var cityParts = cityAddress.split(',');
-                    var city = cityParts.length > 1 ? cityParts[1].trim() : cityAddress;
+                    var city = $element.attr('data-city') || '';
 
                     if (city && city !== currentCity) {
                         currentCity = city;
