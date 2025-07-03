@@ -64,6 +64,84 @@
     background: #13345b; /* CNS Accent Five - Darker blue */
 }
 
+/* Sort Controls */
+.chiro-sort-controls {
+    margin-top: 15px;
+    font-family: "Neufreit", sans-serif;
+}
+
+.sort-controls-label {
+    display: block;
+    color: #035088; /* CNS Primary Blue */
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0 0 10px 0;
+}
+
+.sort-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sort-button {
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #57c7df; /* CNS Accent Three */
+    border-radius: 2px;
+    color: #035088; /* CNS Primary Blue */
+    font-family: "Neufreit", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.sort-button:hover {
+    background: #e4f3f9; /* CNS Accent Four - Very light blue */
+    border-color: #87d5f6; /* CNS Light Blue */
+    color: #13345b; /* CNS Dark Blue */
+}
+
+.sort-button.active {
+    background: #035088; /* CNS Primary Blue */
+    color: white;
+    border-color: #035088;
+}
+
+.sort-button.active:hover {
+    background: #13345b; /* CNS Dark Blue */
+    border-color: #13345b;
+}
+
+/* Sort button focus styles for accessibility */
+.sort-button:focus {
+    outline: 2px solid #87d5f6; /* CNS Light Blue */
+    outline-offset: 2px;
+}
+
+/* City headings for city sort */
+.city-heading {
+    margin: 20px 0 15px 0;
+    padding: 10px 15px;
+    background: #e4f3f9; /* CNS Accent Four - Very light blue */
+    border-left: 4px solid #035088; /* CNS Primary Blue */
+    border-radius: 2px;
+}
+
+.city-heading h4 {
+    margin: 0;
+    color: #035088; /* CNS Primary Blue */
+    font-family: "Neufreit", sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.city-heading:first-child {
+    margin-top: 0;
+}
+
 /* Directory container */
 .chiro-directory-container {
     max-width: 1200px;
@@ -326,6 +404,20 @@
     
     #chiro-search-clear {
         border-radius: 0 0 4px 4px;
+    }
+
+    .chiro-sort-controls {
+        margin-top: 10px;
+    }
+    
+    .sort-buttons-container {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .sort-button {
+        width: 100%;
+        text-align: center;
     }
 
     .chiro-listing {

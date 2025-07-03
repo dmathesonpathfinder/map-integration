@@ -216,12 +216,12 @@ class MapGeocoder
         } else {
             self::log_message("No Google API key configured, using Nominatim only");
         }
-        
+
         // Fallback to Nominatim (OpenStreetMap)
         self::log_message("Trying Nominatim for: {$address}");
         return self::try_nominatim_geocode($address);
     }
-    
+
     /**
      * Try geocoding using Google Geocoding API
      */
@@ -331,12 +331,12 @@ class MapGeocoder
         $formatted_address = isset($result_data['formatted_address']) ? $result_data['formatted_address'] : 'N/A';
         $place_types = isset($result_data['types']) ? implode(', ', $result_data['types']) : 'N/A';
         $location_type = isset($result_data['geometry']['location_type']) ? $result_data['geometry']['location_type'] : 'N/A';
-        
+
         self::log_message("Google geocoding successful: lat={$result['lat']}, lng={$result['lng']}, formatted_address='{$formatted_address}', location_type='{$location_type}', types='{$place_types}'");
 
         return $result;
     }
-    
+
     /**
      * Try geocoding using Nominatim (OpenStreetMap)
      */
@@ -412,7 +412,7 @@ class MapGeocoder
         if (isset($data[0]['class']) && isset($data[0]['type'])) {
             $class = $data[0]['class'];
             $type = $data[0]['type'];
-            
+
             if ($class === 'place' && in_array($type, ['house', 'building'])) {
                 $result['confidence_score'] = 95;
             } elseif ($class === 'highway' || $class === 'place') {
@@ -449,10 +449,8 @@ class MapGeocoder
         $provider_key = 'mepr_clinic_geo_provider' . $suffix;
 
         // Handle both old format (lat/lng) and new format (latitude/longitude)
-        $lat = isset($coordinates['lat']) ? $coordinates['lat'] : 
-               (isset($coordinates['latitude']) ? $coordinates['latitude'] : null);
-        $lng = isset($coordinates['lng']) ? $coordinates['lng'] : 
-               (isset($coordinates['longitude']) ? $coordinates['longitude'] : null);
+        $lat = isset($coordinates['lat']) ? $coordinates['lat'] : (isset($coordinates['latitude']) ? $coordinates['latitude'] : null);
+        $lng = isset($coordinates['lng']) ? $coordinates['lng'] : (isset($coordinates['longitude']) ? $coordinates['longitude'] : null);
 
         if ($lat === null || $lng === null) {
             return false;
@@ -461,18 +459,18 @@ class MapGeocoder
         update_user_meta($user_id, $lat_key, $lat);
         update_user_meta($user_id, $lng_key, $lng);
         update_user_meta($user_id, $time_key, current_time('mysql'));
-        
+
         MapGeocoder::log_message("Saved coordinates for user {$user_id} (suffix: {$suffix}): lat={$lat}, lng={$lng}");
-        
+
         // Save additional metadata if available
         if (isset($coordinates['confidence_score'])) {
             update_user_meta($user_id, $confidence_key, $coordinates['confidence_score']);
         }
-        
+
         if (isset($coordinates['fallback_used'])) {
             update_user_meta($user_id, $fallback_key, $coordinates['fallback_used']);
         }
-        
+
         if (isset($coordinates['provider'])) {
             update_user_meta($user_id, $provider_key, $coordinates['provider']);
         }
@@ -505,23 +503,23 @@ class MapGeocoder
             'latitude' => floatval($lat),
             'longitude' => floatval($lng)
         );
-        
+
         // Add additional metadata if available
         $confidence = get_user_meta($user_id, $confidence_key, true);
         if (!empty($confidence)) {
             $result['confidence_score'] = intval($confidence);
         }
-        
+
         $fallback = get_user_meta($user_id, $fallback_key, true);
         if (!empty($fallback)) {
             $result['fallback_used'] = $fallback;
         }
-        
+
         $geocoded_at = get_user_meta($user_id, $time_key, true);
         if (!empty($geocoded_at)) {
             $result['geocoded_at'] = $geocoded_at;
         }
-        
+
         $provider = get_user_meta($user_id, $provider_key, true);
         if (!empty($provider)) {
             $result['provider'] = $provider;
@@ -594,7 +592,7 @@ class MapIntegration
     {
         // Add shortcode for displaying maps
         add_shortcode('map_integration', array($this, 'display_map_shortcode'));
-        
+
         // Add shortcode for chiropractor directory
         add_shortcode('chiropractor_directory', array($this, 'display_chiropractor_directory'));
 
@@ -606,12 +604,12 @@ class MapIntegration
 
         // Hook into user meta updates to trigger geocoding
         add_action('updated_user_meta', array($this, 'handle_user_meta_update'), 10, 4);
-        
+
         // Add AJAX handlers for bulk geocoding control
         add_action('wp_ajax_start_bulk_geocoding', array($this, 'ajax_start_bulk_geocoding'));
         add_action('wp_ajax_stop_bulk_geocoding', array($this, 'ajax_stop_bulk_geocoding'));
         add_action('wp_ajax_get_bulk_geocoding_status', array($this, 'ajax_get_bulk_geocoding_status'));
-        
+
         // Add scheduled event handler for background processing
         add_action('process_geocoding_batch', array($this, 'process_geocoding_batch'));
     }
@@ -623,7 +621,7 @@ class MapIntegration
     {
         // Create geocoding cache table
         $this->create_geocoding_cache_table();
-        
+
         // Add any other activation logic here
         flush_rewrite_rules();
     }
@@ -649,7 +647,7 @@ class MapIntegration
             'map-integration',
             array($this, 'admin_page')
         );
-        
+
         // Add geocoding tools submenu
         add_submenu_page(
             'options-general.php',
@@ -671,15 +669,15 @@ class MapIntegration
             update_option('map_integration_google_api_key', $google_api_key);
             echo '<div class="notice notice-success"><p>Settings saved successfully.</p></div>';
         }
-        
+
         // Enqueue admin scripts for AJAX functionality
         wp_enqueue_script('jquery');
         wp_localize_script('jquery', 'mapIntegrationAjax', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('bulk_geocoding_control')
         ));
-        
-        
+
+
         // Handle bulk geocoding action
         if (isset($_POST['bulk_geocode']) && wp_verify_nonce($_POST['_wpnonce'], 'bulk_geocode_action')) {
             $this->bulk_geocode_users();
@@ -714,11 +712,11 @@ class MapIntegration
                     <tr>
                         <th scope="row">Google Maps API Key</th>
                         <td>
-                            <input type="text" name="google_api_key" class="regular-text" 
-                                   value="<?php echo esc_attr(get_option('map_integration_google_api_key', '')); ?>" />
+                            <input type="text" name="google_api_key" class="regular-text"
+                                value="<?php echo esc_attr(get_option('map_integration_google_api_key', '')); ?>" />
                             <p class="description">
-                                <strong>Google Geocoding API Key:</strong> If provided, Google will be used as the primary geocoding provider with Nominatim (OpenStreetMap) as fallback. 
-                                Google provides more accurate results but requires an API key. 
+                                <strong>Google Geocoding API Key:</strong> If provided, Google will be used as the primary geocoding provider with Nominatim (OpenStreetMap) as fallback.
+                                Google provides more accurate results but requires an API key.
                                 <a href="https://developers.google.com/maps/documentation/geocoding/get-api-key" target="_blank">Get your API key here</a>.
                             </p>
                         </td>
@@ -802,13 +800,13 @@ class MapIntegration
 
             <h2>Interactive Bulk Geocoding</h2>
             <p>Geocode all existing clinic addresses that don't have coordinates yet. This process can be started, stopped, and monitored in real-time.</p>
-            
+
             <div id="bulk-geocoding-controls">
                 <button id="start-geocoding" class="button button-primary">Start Bulk Geocoding</button>
                 <button id="stop-geocoding" class="button" disabled>Stop Geocoding</button>
                 <button id="refresh-status" class="button">Refresh Status</button>
             </div>
-            
+
             <div id="geocoding-status" style="margin-top: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
                 <h4>Status: <span id="status-indicator">Not running</span></h4>
                 <div id="progress-info">
@@ -818,131 +816,131 @@ class MapIntegration
                     <p><strong>Current:</strong> <span id="progress-message">Ready to start</span></p>
                 </div>
             </div>
-            
+
             <script>
-            jQuery(document).ready(function($) {
-                var geocodingNonce = '<?php echo wp_create_nonce('bulk_geocoding_control'); ?>';
-                var statusCheckInterval;
-                var errorCount = 0;
-                
-                // Start geocoding
-                $('#start-geocoding').click(function() {
-                    var button = $(this);
-                    button.prop('disabled', true).text('Starting...');
-                    
-                    $.post(ajaxurl, {
-                        action: 'start_bulk_geocoding',
-                        nonce: geocodingNonce
-                    }, function(response) {
-                        if (response.success) {
-                            $('#stop-geocoding').prop('disabled', false);
-                            $('#status-indicator').text('Starting...');
-                            startStatusUpdates();
-                            button.text('Start Bulk Geocoding');
-                        } else {
-                            alert('Error: ' + response.data);
-                            button.prop('disabled', false).text('Start Bulk Geocoding');
-                        }
-                    }).fail(function() {
-                        alert('Network error occurred. Please try again.');
-                        button.prop('disabled', false).text('Start Bulk Geocoding');
-                    });
-                });
-                
-                // Stop geocoding
-                $('#stop-geocoding').click(function() {
-                    if (!confirm('Are you sure you want to stop the geocoding process?')) {
-                        return;
-                    }
-                    
-                    var button = $(this);
-                    button.prop('disabled', true).text('Stopping...');
-                    
-                    $.post(ajaxurl, {
-                        action: 'stop_bulk_geocoding',
-                        nonce: geocodingNonce
-                    }, function(response) {
-                        if (response.success) {
-                            $('#start-geocoding').prop('disabled', false);
-                            stopStatusUpdates();
-                            button.text('Stop Geocoding');
-                        } else {
-                            alert('Error: ' + response.data);
-                            button.prop('disabled', false).text('Stop Geocoding');
-                        }
-                    }).fail(function() {
-                        alert('Network error occurred. Please try again.');
-                        button.prop('disabled', false).text('Stop Geocoding');
-                    });
-                });
-                
-                // Refresh status
-                $('#refresh-status').click(function() {
-                    updateStatus();
-                });
-                
-                // Update status function
-                function updateStatus() {
-                    $.post(ajaxurl, {
-                        action: 'get_bulk_geocoding_status',
-                        nonce: geocodingNonce
-                    }, function(response) {
-                        if (response.success) {
-                            var status = response.data;
-                            $('#status-indicator').text(status.running ? 'Running' : 'Not running');
-                            $('#processed-count').text(status.total_processed || 0);
-                            $('#success-count').text(status.total_success || 0);
-                            $('#failed-count').text(status.total_failed || 0);
-                            $('#progress-message').text(status.progress_message || 'Ready');
-                            
-                            // Update button states
-                            $('#start-geocoding').prop('disabled', status.running);
-                            $('#stop-geocoding').prop('disabled', !status.running);
-                            
-                            // Auto-stop status updates if not running
-                            if (!status.running && statusCheckInterval) {
-                                stopStatusUpdates();
+                jQuery(document).ready(function($) {
+                    var geocodingNonce = '<?php echo wp_create_nonce('bulk_geocoding_control'); ?>';
+                    var statusCheckInterval;
+                    var errorCount = 0;
+
+                    // Start geocoding
+                    $('#start-geocoding').click(function() {
+                        var button = $(this);
+                        button.prop('disabled', true).text('Starting...');
+
+                        $.post(ajaxurl, {
+                            action: 'start_bulk_geocoding',
+                            nonce: geocodingNonce
+                        }, function(response) {
+                            if (response.success) {
+                                $('#stop-geocoding').prop('disabled', false);
+                                $('#status-indicator').text('Starting...');
+                                startStatusUpdates();
+                                button.text('Start Bulk Geocoding');
+                            } else {
+                                alert('Error: ' + response.data);
+                                button.prop('disabled', false).text('Start Bulk Geocoding');
                             }
-                            
-                            // Reset error count on successful update
-                            errorCount = 0;
-                        } else {
-                            console.error('Status update error:', response.data);
+                        }).fail(function() {
+                            alert('Network error occurred. Please try again.');
+                            button.prop('disabled', false).text('Start Bulk Geocoding');
+                        });
+                    });
+
+                    // Stop geocoding
+                    $('#stop-geocoding').click(function() {
+                        if (!confirm('Are you sure you want to stop the geocoding process?')) {
+                            return;
+                        }
+
+                        var button = $(this);
+                        button.prop('disabled', true).text('Stopping...');
+
+                        $.post(ajaxurl, {
+                            action: 'stop_bulk_geocoding',
+                            nonce: geocodingNonce
+                        }, function(response) {
+                            if (response.success) {
+                                $('#start-geocoding').prop('disabled', false);
+                                stopStatusUpdates();
+                                button.text('Stop Geocoding');
+                            } else {
+                                alert('Error: ' + response.data);
+                                button.prop('disabled', false).text('Stop Geocoding');
+                            }
+                        }).fail(function() {
+                            alert('Network error occurred. Please try again.');
+                            button.prop('disabled', false).text('Stop Geocoding');
+                        });
+                    });
+
+                    // Refresh status
+                    $('#refresh-status').click(function() {
+                        updateStatus();
+                    });
+
+                    // Update status function
+                    function updateStatus() {
+                        $.post(ajaxurl, {
+                            action: 'get_bulk_geocoding_status',
+                            nonce: geocodingNonce
+                        }, function(response) {
+                            if (response.success) {
+                                var status = response.data;
+                                $('#status-indicator').text(status.running ? 'Running' : 'Not running');
+                                $('#processed-count').text(status.total_processed || 0);
+                                $('#success-count').text(status.total_success || 0);
+                                $('#failed-count').text(status.total_failed || 0);
+                                $('#progress-message').text(status.progress_message || 'Ready');
+
+                                // Update button states
+                                $('#start-geocoding').prop('disabled', status.running);
+                                $('#stop-geocoding').prop('disabled', !status.running);
+
+                                // Auto-stop status updates if not running
+                                if (!status.running && statusCheckInterval) {
+                                    stopStatusUpdates();
+                                }
+
+                                // Reset error count on successful update
+                                errorCount = 0;
+                            } else {
+                                console.error('Status update error:', response.data);
+                                errorCount++;
+                                if (errorCount > 3) {
+                                    stopStatusUpdates();
+                                    $('#progress-message').text('Error getting status - stopped monitoring');
+                                }
+                            }
+                        }).fail(function() {
+                            console.error('Network error during status update');
                             errorCount++;
                             if (errorCount > 3) {
                                 stopStatusUpdates();
-                                $('#progress-message').text('Error getting status - stopped monitoring');
+                                $('#progress-message').text('Network error - stopped monitoring');
                             }
-                        }
-                    }).fail(function() {
-                        console.error('Network error during status update');
-                        errorCount++;
-                        if (errorCount > 3) {
-                            stopStatusUpdates();
-                            $('#progress-message').text('Network error - stopped monitoring');
-                        }
-                    });
-                }
-                
-                // Start status updates
-                function startStatusUpdates() {
-                    updateStatus();
-                    statusCheckInterval = setInterval(updateStatus, 3000); // Update every 3 seconds
-                }
-                
-                // Stop status updates
-                function stopStatusUpdates() {
-                    if (statusCheckInterval) {
-                        clearInterval(statusCheckInterval);
-                        statusCheckInterval = null;
+                        });
                     }
-                }
-                
-                // Initial status check
-                updateStatus();
-            });
+
+                    // Start status updates
+                    function startStatusUpdates() {
+                        updateStatus();
+                        statusCheckInterval = setInterval(updateStatus, 3000); // Update every 3 seconds
+                    }
+
+                    // Stop status updates
+                    function stopStatusUpdates() {
+                        if (statusCheckInterval) {
+                            clearInterval(statusCheckInterval);
+                            statusCheckInterval = null;
+                        }
+                    }
+
+                    // Initial status check
+                    updateStatus();
+                });
             </script>
-            
+
             <h3>Legacy Bulk Geocoding</h3>
             <p><em>For one-time batch processing (old method):</em></p>
             <form method="post" action="">
@@ -990,7 +988,6 @@ class MapIntegration
                 <li><code>[chiropractor_directory include_map="true"]</code> - Directory with integrated map</li>
                 <li><code>[chiropractor_directory show_map_links="false"]</code> - Directory without map links</li>
                 <li><code>[chiropractor_directory show_contact="false"]</code> - Directory without contact info</li>
-                <li><code>[chiropractor_directory sort_by="location_count" sort_order="desc"]</code> - Sort by number of locations</li>
                 <li><code>[chiropractor_directory user_role="subscriber"]</code> - Filter by user role</li>
             </ul>
 
@@ -1092,12 +1089,12 @@ class MapIntegration
         ), $atts);
 
         $output = '';
-        
+
         // Show listings if requested
         if ($atts['show_listings'] === 'true') {
             $output .= $this->display_clinic_listings($atts);
         }
-        
+
         // Show map if requested
         if ($atts['show_clinics'] === 'true') {
             $output .= $this->display_clinic_map($atts);
@@ -1111,7 +1108,7 @@ class MapIntegration
             $output .= '</div>';
             $output .= '</div>';
         }
-        
+
         return $output;
     }
     /**
@@ -1130,7 +1127,7 @@ class MapIntegration
 
         // Create map HTML
         $output = '<div id="' . esc_attr($map_id) . '" class="map-integration-leaflet" style="width: ' . esc_attr($atts['width']) . '; height: ' . esc_attr($atts['height']) . ';"></div>';
-        $output .= "<script type=\"text/javascript\">\n        document.addEventListener(\"DOMContentLoaded\", function() {\n            function initializeMap() {\n                if (typeof L === \"undefined\" || typeof L.Control === \"undefined\") {\n                    setTimeout(initializeMap, 100);\n                    return;\n                }\n                try {\n                    var map = L.map(\"" . esc_js($map_id) . "\").setView([" . floatval($atts['center_lat']) . ", " . floatval($atts['center_lng']) . "], " . intval($atts['zoom']) . ");\n                    var tileLayer = L.tileLayer(\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\", {\n                        attribution: \"&copy; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap</a> contributors\",\n                        maxZoom: 18\n                    });\n                    tileLayer.addTo(map);\n                    var clinics = " . json_encode($clinic_data) . ";\n                    var bounds = [];\n                    var markers = [];\n                    clinics.forEach(function(clinic, index) {\n                        if (clinic.lat && clinic.lng) {\n                            var marker = L.marker([clinic.lat, clinic.lng]).addTo(map);\n                            marker.bindPopup((clinic.name ? '<h4>' + clinic.name + '</h4>' : '') +\n                                (clinic.address ? '<p>' + clinic.address + '</p>' : '') +\n                                (clinic.phone ? '<p>Phone: ' + clinic.phone + '</p>' : '') +\n                                (clinic.email ? '<p>Email: ' + clinic.email + '</p>' : '') +\n                                (clinic.website ? '<p><a href=\"' + clinic.website + '\" target=\"_blank\">Website</a></p>' : ''));\n                            marker.clinicName = clinic.name || '';\n                            markers.push(marker);\n                            bounds.push([clinic.lat, clinic.lng]);\n                        }\n                    });\n                    if (bounds.length > 0) {\n                        map.fitBounds(bounds, {padding: [20, 20]});\n                    }\n                    if (typeof L.Control.Search !== \"undefined\") {\n                        var markerLayer = L.layerGroup(markers);\n                        var searchControl = new L.Control.Search({\n                            layer: markerLayer,\n                            propertyName: 'clinicName',\n                            marker: false,\n                            moveToLocation: function(latlng, title, map) {\n                                map.setView(latlng, 14);\n                            }\n                        });\n                        searchControl.on('search:locationfound', function(e) {\n                            if (e.layer._popup) e.layer.openPopup();\n                        });\n                        map.addControl(searchControl);\n                    }\n                    setTimeout(function() { if (map) { map.invalidateSize(); } }, 250);\n\n                    // Add global function to center on a clinic by name\n                    window.centerMapOnClinic = function(clinicName) {\n                        var found = false;\n                        markers.forEach(function(marker) {\n                            if (marker.clinicName && marker.clinicName.toLowerCase() === clinicName.toLowerCase()) {\n                                // First scroll to the map\n                                var mapElement = document.getElementById(\"" . esc_js($map_id) . "\");\n                                if (mapElement) {\n                                    mapElement.scrollIntoView({ \n                                        behavior: 'smooth', \n                                        block: 'center' \n                                    });\n                                }\n                                \n                                // Then center the map on the clinic\n                                setTimeout(function() {\n                                    map.setView(marker.getLatLng(), 16, {\n                                        animate: true,\n                                        duration: 1.5\n                                    });\n                                    setTimeout(function() {\n                                        marker.openPopup();\n                                    }, 1600);\n                                }, 500); // Wait for scroll to complete\n                                found = true;\n                                return false;\n                            }\n                        });\n                        if (!found) {\n                            console.log('Available clinics:', markers.map(function(m) { return m.clinicName; }));\n                            alert('Clinic \\\"' + clinicName + '\\\" not found on map.');\n                        }\n                    };\n                } catch (error) {\n                    console.error(\"Map initialization error:\", error);\n                    document.getElementById(\"" . esc_js($map_id) . "\").innerHTML = \"<div style=\\\"padding: 20px; text-align: center; color: #666;\\\">Error loading map. Please refresh the page.</div>\";\n                }\n            }\n            initializeMap();\n        });\n        </script>";
+        $output .= "<script type=\"text/javascript\">\n        document.addEventListener(\"DOMContentLoaded\", function() {\n            function initializeMap() {\n                if (typeof L === \"undefined\" || typeof L.Control === \"undefined\") {\n                    setTimeout(initializeMap, 100);\n                    return;\n                }\n                try {\n                    var map = L.map(\"" . esc_js($map_id) . "\").setView([" . floatval($atts['center_lat']) . ", " . floatval($atts['center_lng']) . "], " . intval($atts['zoom']) . ");\n                    var tileLayer = L.tileLayer(\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\", {\n                        attribution: \"&copy; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap</a> contributors\",\n                        maxZoom: 18\n                    });\n                    tileLayer.addTo(map);\n                    var clinics = " . json_encode($clinic_data) . ";\n                    var bounds = [];\n                    var markers = [];\n                    clinics.forEach(function(clinic, index) {\n                        if (clinic.lat && clinic.lng) {\n                            var marker = L.marker([clinic.lat, clinic.lng]).addTo(map);\n                            marker.bindPopup((clinic.name ? '<h4>' + clinic.name + '</h4>' : '') +\n                                (clinic.address ? '<p>' + clinic.address + '</p>' : '') +\n                                (clinic.phone ? '<p>Phone: ' + clinic.phone + '</p>' : '') +\n                                (clinic.email ? '<p>Email: ' + clinic.email + '</p>' : '') +\n                                (clinic.website ? '<p><a href=\"' + clinic.website + '\" target=\"_blank\">Website</a></p>' : ''));\n                            marker.clinicName = clinic.name || '';\n                            markers.push(marker);\n                            bounds.push([clinic.lat, clinic.lng]);\n                        }\n                    });\n                    if (bounds.length > 0) {\n                        map.fitBounds(bounds, {padding: [20, 20]});\n                    }\n                    if (typeof L.Control.Search !== \"undefined\") {\n                        var markerLayer = L.layerGroup(markers);\n                        var searchControl = new L.Control.Search({\n                            layer: markerLayer,\n                            propertyName: 'clinicName',\n                            marker: false,\n                            moveToLocation: function(latlng, title, map) {\n                                map.setView(latlng, 14);\n                            }\n                        });\n                        searchControl.on('search:locationfound', function(e) {\n                            if (e.layer._popup) e.layer.openPopup();\n                        });\n                        map.addControl(searchControl);\n                    }\n                    setTimeout(function() { if (map) { map.invalidateSize(); } }, 250);\n\n                    // Add global function to center on a clinic by name\n                    window.centerMapOnClinic = function(clinicName) {\n                        var found = false;\n                        markers.forEach(function(marker) {\n                            if (marker.clinicName && marker.clinicName.toLowerCase() === clinicName.toLowerCase()) {\n                                // First scroll to the map\n                                var mapElement = document.getElementById(\"" . esc_js($map_id) . "\");\n                                if (mapElement) {\n                                    mapElement.scrollIntoView({ \n                                        behavior: 'smooth', \n                                        block: 'center' \n                                    });\n                                }\n                                \n                                // Then center the map on the clinic\n                                setTimeout(function() {\n                                    map.setView(marker.getLatLng(), 13, {\n                                        animate: true,\n                                        duration: 1.5\n                                    });\n                                    setTimeout(function() {\n                                        marker.openPopup();\n                                    }, 1600);\n                                }, 500); // Wait for scroll to complete\n                                found = true;\n                                return false;\n                            }\n                        });\n                        if (!found) {\n                            console.log('Available clinics:', markers.map(function(m) { return m.clinicName; }));\n                            alert('Clinic \\\"' + clinicName + '\\\" not found on map.');\n                        }\n                    };\n                } catch (error) {\n                    console.error(\"Map initialization error:\", error);\n                    document.getElementById(\"" . esc_js($map_id) . "\").innerHTML = \"<div style=\\\"padding: 20px; text-align: center; color: #666;\\\">Error loading map. Please refresh the page.</div>\";\n                }\n            }\n            initializeMap();\n        });\n        </script>";
 
         return $output;
     }
@@ -1182,6 +1179,28 @@ class MapIntegration
             $users = get_users($args);
 
             foreach ($users as $user) {
+                // Filter out users who don't have pw_user_status equal to "approved"
+                $user_status = get_user_meta($user->ID, 'pw_user_status', true);
+                if ($user_status !== 'approved') {
+                    continue;
+                }
+
+                // Filter out users who have "Student Membership" subscription type
+                if (class_exists('MeprUser')) {
+                    $mepr_user = new MeprUser($user->ID);
+                    $active_memberships = $mepr_user->active_product_subscriptions('products');
+                    $has_student_membership = false;
+                    foreach ($active_memberships as $membership) {
+                        if (isset($membership->post_title) && $membership->post_title === 'Student Membership') {
+                            $has_student_membership = true;
+                            break;
+                        }
+                    }
+                    if ($has_student_membership) {
+                        continue;
+                    }
+                }
+
                 $lat = get_user_meta($user->ID, $lat_key, true);
                 $lng = get_user_meta($user->ID, $lng_key, true);
                 $street = get_user_meta($user->ID, $street_key, true);
@@ -1219,11 +1238,11 @@ class MapIntegration
     {
         // Get all clinic locations with coordinates (filtered by user role)
         $clinic_data = $this->get_all_clinic_coordinates($atts['user_role']);
-        
+
         if (empty($clinic_data)) {
             return '<div class="clinic-listings-container"><p>No clinic locations found.</p></div>';
         }
-        
+
         // Group clinics by user (chiropractor) to handle multiple locations
         $grouped_clinics = array();
         foreach ($clinic_data as $clinic) {
@@ -1235,32 +1254,32 @@ class MapIntegration
                     'locations' => array()
                 );
             }
-            
+
             // Extract chiropractor name (remove location suffix)
             $chiropractor_name = $clinic['name'];
             if (preg_match('/^(.+?)\s*\((?:Primary|Secondary|Third)\)$/', $chiropractor_name, $matches)) {
                 $chiropractor_name = trim($matches[1]);
             }
-            
+
             if (empty($grouped_clinics[$user_id]['chiropractor_name'])) {
                 $grouped_clinics[$user_id]['chiropractor_name'] = $chiropractor_name;
             }
-            
+
             $grouped_clinics[$user_id]['locations'][] = $clinic;
         }
-        
+
         // Generate unique map ID for the listings to work with
         $map_id = 'map-integration-' . uniqid();
-        
+
         $output = '<div class="clinic-listings-container">';
-        
+
         foreach ($grouped_clinics as $group) {
             $chiropractor_name = $group['chiropractor_name'];
             $locations = $group['locations'];
-            
+
             // Determine if this chiropractor has multiple locations
             $has_multiple_locations = count($locations) > 1;
-            
+
             if ($has_multiple_locations) {
                 // Group display for multiple locations
                 $output .= '<div class="clinic-group clinic-group-multiple">';
@@ -1268,11 +1287,11 @@ class MapIntegration
                 $output .= '<h3 class="chiropractor-name">' . esc_html($chiropractor_name) . '</h3>';
                 $output .= '<p class="multiple-locations-note">' . count($locations) . ' locations</p>';
                 $output .= '</div>';
-                
+
                 foreach ($locations as $location) {
                     $output .= $this->render_single_location($location, $chiropractor_name, true);
                 }
-                
+
                 $output .= '</div>'; // Close clinic-group-multiple
             } else {
                 // Single location display
@@ -1281,9 +1300,9 @@ class MapIntegration
                 $output .= '</div>'; // Close clinic-group-single
             }
         }
-        
+
         $output .= '</div>'; // Close clinic-listings-container
-        
+
         // Add a script to handle clicks when no map is present
         $output .= '<script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function() {
@@ -1295,10 +1314,10 @@ class MapIntegration
             }
         });
         </script>';
-        
+
         return $output;
     }
-    
+
     /**
      * Render a single clinic location listing
      */
@@ -1309,15 +1328,15 @@ class MapIntegration
         $phone = $location['phone'];
         $email = $location['email'];
         $website = $location['website'];
-        
+
         // Extract location name from clinic name if it has a suffix
         $location_name = '';
         if (preg_match('/\(([^)]+)\)$/', $clinic_name, $matches)) {
             $location_name = $matches[1];
         }
-        
+
         $output = '<div class="clinic-listing">';
-        
+
         if (!$is_grouped) {
             // For single locations, show chiropractor name prominently
             $output .= '<h3 class="chiropractor-name">';
@@ -1335,28 +1354,28 @@ class MapIntegration
                 $output .= '</h4>';
             }
         }
-        
+
         if ($address) {
             $output .= '<p class="clinic-address">' . esc_html($address) . '</p>';
         }
-        
+
         if ($phone) {
             $output .= '<p class="clinic-phone">Phone: ' . esc_html($phone) . '</p>';
         }
-        
+
         if ($email) {
             $output .= '<p class="clinic-email">Email: <a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a></p>';
         }
-        
+
         if ($website) {
             $output .= '<p class="clinic-website"><a href="' . esc_url($website) . '" target="_blank">Visit Website</a></p>';
         }
-        
+
         $output .= '</div>'; // Close clinic-listing
-        
+
         return $output;
     }
-    
+
     /**
      * Handle user meta updates and trigger geocoding for clinic addresses
      */
@@ -1527,7 +1546,7 @@ class MapIntegration
                 if (!empty($street) || !empty($city)) {
                     // Use the same logic as our background geocoding to determine if coordinates are needed
                     $needs_geocoding = false;
-                    
+
                     if (empty($lat) || empty($lng) || floatval($lat) == 0 || floatval($lng) == 0) {
                         // No coordinates or invalid coordinates
                         $needs_geocoding = true;
@@ -1535,7 +1554,7 @@ class MapIntegration
                         // Province-level coordinates that need improvement
                         $needs_geocoding = true;
                     }
-                    
+
                     if ($needs_geocoding) {
                         $non_geocoded[] = array(
                             'user_id' => $user->ID,
@@ -1714,11 +1733,11 @@ class MapIntegration
     private function create_geocoding_cache_table()
     {
         global $wpdb;
-        
+
         $table_name = $wpdb->prefix . 'geocoded_addresses';
-        
+
         $charset_collate = $wpdb->get_charset_collate();
-        
+
         $sql = "CREATE TABLE $table_name (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             original_address text NOT NULL,
@@ -1733,10 +1752,10 @@ class MapIntegration
             KEY provider_idx (provider),
             KEY created_at_idx (created_at)
         ) $charset_collate;";
-        
+
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
-        
+
         MapGeocoder::log_message("Geocoding cache table created/updated: $table_name");
     }
 
@@ -1749,24 +1768,24 @@ class MapIntegration
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Insufficient permissions');
         }
-        
+
         // Check nonce
         if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
             wp_send_json_error('Invalid nonce');
         }
-        
+
         // Check if already running
         $status = get_transient('bulk_geocoding_status');
         if ($status && $status['running']) {
             wp_send_json_error('Bulk geocoding is already running');
         }
-        
+
         // Start the process
         $this->start_background_geocoding();
-        
+
         wp_send_json_success('Bulk geocoding started');
     }
-    
+
     /**
      * AJAX handler to stop bulk geocoding
      */
@@ -1776,18 +1795,18 @@ class MapIntegration
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Insufficient permissions');
         }
-        
+
         // Check nonce
         if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
             wp_send_json_error('Invalid nonce');
         }
-        
+
         // Stop the process
         $this->stop_background_geocoding();
-        
+
         wp_send_json_success('Bulk geocoding stopped');
     }
-    
+
     /**
      * AJAX handler to get bulk geocoding status
      */
@@ -1797,18 +1816,18 @@ class MapIntegration
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Insufficient permissions');
         }
-        
+
         // Check nonce
         if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
             wp_send_json_error('Invalid nonce');
         }
-        
+
         // Get current status
         $status = $this->get_bulk_geocoding_status();
-        
+
         wp_send_json_success($status);
     }
-    
+
     /**
      * Start background geocoding process
      */
@@ -1827,7 +1846,7 @@ class MapIntegration
                 return;
             }
         }
-        
+
         // Initialize status
         $status = array(
             'running' => true,
@@ -1838,15 +1857,15 @@ class MapIntegration
             'current_user_id' => 0,
             'progress_message' => 'Starting bulk geocoding...'
         );
-        
+
         set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
-        
+
         // Schedule the first batch
         wp_schedule_single_event(time(), 'process_geocoding_batch');
-        
+
         MapGeocoder::log_message("Background bulk geocoding started");
     }
-    
+
     /**
      * Stop background geocoding process
      */
@@ -1860,13 +1879,13 @@ class MapIntegration
             $status['progress_message'] = 'Geocoding stopped by user';
             set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
         }
-        
+
         // Clear any scheduled events
         wp_clear_scheduled_hook('process_geocoding_batch');
-        
+
         MapGeocoder::log_message("Background bulk geocoding stopped by user");
     }
-    
+
     /**
      * Process a batch of geocoding in the background
      */
@@ -1878,23 +1897,23 @@ class MapIntegration
             MapGeocoder::log_message("Background geocoding process stopped");
             return;
         }
-        
+
         MapGeocoder::log_message("Processing geocoding batch...");
-        
+
         // Get users that need geocoding
         $users_to_process = $this->get_users_needing_geocoding(10); // Process 10 at a time
-        
+
         if (empty($users_to_process)) {
             // No more users to process, complete the job
             $status['running'] = false;
             $status['completed_at'] = time();
             $status['progress_message'] = 'Bulk geocoding completed successfully';
             set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
-            
+
             MapGeocoder::log_message("Background bulk geocoding completed: {$status['total_processed']} processed, {$status['total_success']} successful");
             return;
         }
-        
+
         // Process each user
         foreach ($users_to_process as $user_info) {
             // Check if we should stop
@@ -1902,23 +1921,23 @@ class MapIntegration
             if (!$current_status || !$current_status['running']) {
                 break;
             }
-            
+
             $user_id = $user_info['user_id'];
             $suffix = $user_info['suffix'];
             $fields = $user_info['fields'];
-            
+
             $status['current_user_id'] = $user_id;
             $status['progress_message'] = "Processing user {$user_id} (suffix: {$suffix})";
             set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
-            
+
             $street = get_user_meta($user_id, $fields['street'], true);
             $city = get_user_meta($user_id, $fields['city'], true);
             $province = get_user_meta($user_id, $fields['province'], true);
-            
+
             // Check if coordinates already exist
             $existing_lat = get_user_meta($user_id, 'mepr_clinic_lat' . $suffix, true);
             $existing_lng = get_user_meta($user_id, 'mepr_clinic_lng' . $suffix, true);
-            
+
             if (!empty($existing_lat) && !empty($existing_lng) && floatval($existing_lat) != 0 && floatval($existing_lng) != 0) {
                 // Skip if coordinates already exist and aren't province-level
                 if (!MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id)) {
@@ -1927,13 +1946,13 @@ class MapIntegration
                     continue;
                 }
             }
-            
+
             MapGeocoder::log_message("Background processing user {$user_id}: street='{$street}', city='{$city}', province='{$province}'");
-            
+
             // Only geocode if we have street or city data
             if (!empty($street) || !empty($city)) {
                 $coordinates = $this->geocode_address_with_improved_fallback($street, $city, $province);
-                
+
                 if ($coordinates) {
                     MapGeocoder::save_coordinates($user_id, $coordinates, $suffix);
                     $status['total_success']++;
@@ -1949,46 +1968,46 @@ class MapIntegration
                 $this->mark_geocoding_failed($user_id, $suffix, 'province_only');
                 MapGeocoder::log_message("Background geocoding: User {$user_id} has province-only address, marking as skipped");
             }
-            
+
             $status['total_processed']++;
             set_transient('bulk_geocoding_status', $status, 12 * HOUR_IN_SECONDS);
-            
+
             // Small delay to respect rate limits
             sleep(1);
         }
-        
+
         // Schedule next batch if still running
         $final_status = get_transient('bulk_geocoding_status');
         if ($final_status && $final_status['running']) {
             wp_schedule_single_event(time() + 2, 'process_geocoding_batch');
         }
     }
-    
+
     /**
      * Get users that need geocoding with improved fallback handling
      */
     private function get_users_needing_geocoding($limit = 10)
     {
         global $wpdb;
-        
+
         $address_sets = array(
             '' => array('street' => 'mepr_clinic_street', 'city' => 'mepr_clinic_city', 'province' => 'mepr_clinic_province'),
             '_2' => array('street' => 'mepr_clinic_street_2', 'city' => 'mepr_clinic_city_2', 'province' => 'mepr_clinic_province_2'),
             '_3' => array('street' => 'mepr_clinic_street_3', 'city' => 'mepr_clinic_city_3', 'province' => 'mepr_clinic_province_3')
         );
-        
+
         $users_needing_geocoding = array();
-        
-               
+
+
         foreach ($address_sets as $suffix => $fields) {
             if (count($users_needing_geocoding) >= $limit) {
                 break;
             }
-            
+
             $lat_key = 'mepr_clinic_lat' . $suffix;
             $street_key = $fields['street'];
             $city_key = $fields['city'];
-            
+
             // Get users with addresses but no coordinates AND no failed markers
             $users_without_coords = $wpdb->get_results($wpdb->prepare("
                 SELECT DISTINCT s.user_id 
@@ -2002,38 +2021,39 @@ class MapIntegration
                 ORDER BY s.user_id ASC
                 LIMIT %d
             ", $lat_key, 'mepr_clinic_geocode_failed' . $suffix, $street_key, $city_key, $limit - count($users_needing_geocoding)));
-            
+
             foreach ($users_without_coords as $user_row) {
                 if (count($users_needing_geocoding) >= $limit) {
                     break;
                 }
-                
+
                 $user_id = $user_row->user_id;
-                
+
                 // Double-check that this user actually has address data AND doesn't have valid coordinates
                 $street = get_user_meta($user_id, $street_key, true);
                 $city = get_user_meta($user_id, $city_key, true);
-                
+
                 // Also double-check coordinates aren't already present
                 $existing_lat = get_user_meta($user_id, $lat_key, true);
                 $existing_lng = get_user_meta($user_id, 'mepr_clinic_lng' . $suffix, true);
-                
+
                 // Only include if they have street or city data (not just province) AND no valid coordinates
-                if ((!empty($street) || !empty($city)) && 
+                if ((!empty($street) || !empty($city)) &&
                     (empty($existing_lat) || empty($existing_lng) || floatval($existing_lat) == 0 || floatval($existing_lng) == 0 ||
-                     MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id))) {
+                        MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id))
+                ) {
                     $users_needing_geocoding[] = array(
                         'user_id' => $user_id,
                         'suffix' => $suffix,
                         'fields' => $fields
                     );
-                    
+
                     MapGeocoder::log_message("Added user {$user_id} (suffix: {$suffix}) to geocoding queue - no coordinates found");
                 } else {
                     MapGeocoder::log_message("Skipped user {$user_id} (suffix: {$suffix}) - already has valid coordinates or no address data");
                 }
             }
-            
+
             // If we still need more users, check for province-level coordinates that need improvement
             if (count($users_needing_geocoding) < $limit) {
                 $users_with_poor_coords = $wpdb->get_results($wpdb->prepare("
@@ -2049,15 +2069,15 @@ class MapIntegration
                     ORDER BY s.user_id ASC
                     LIMIT %d
                 ", $lat_key, 'mepr_clinic_geocode_failed' . $suffix, $street_key, $city_key, $limit - count($users_needing_geocoding)));
-                
+
                 foreach ($users_with_poor_coords as $user_row) {
                     if (count($users_needing_geocoding) >= $limit) {
                         break;
                     }
-                    
+
                     $user_id = $user_row->user_id;
                     $existing_lat = get_user_meta($user_id, $lat_key, true);
-                    
+
                     // Check if coordinates are province-level (too general)
                     if (MapGeocoder::is_province_level_coordinate($existing_lat, $suffix, $user_id)) {
                         $users_needing_geocoding[] = array(
@@ -2065,17 +2085,17 @@ class MapIntegration
                             'suffix' => $suffix,
                             'fields' => $fields
                         );
-                        
+
                         MapGeocoder::log_message("Added user {$user_id} (suffix: {$suffix}) to geocoding queue - province-level coordinates need improvement");
                     }
                 }
             }
         }
-        
+
         MapGeocoder::log_message("Found " . count($users_needing_geocoding) . " users needing geocoding (limit: {$limit})");
         return $users_needing_geocoding;
     }
-    
+
     /**
      * Geocode address with improved fallback handling for better results
      */
@@ -2083,14 +2103,14 @@ class MapIntegration
     {
         // First try the original method
         $result = MapGeocoder::geocode_address($street, $city, $province);
-        
+
         if ($result) {
             return $result;
         }
-        
+
         // Enhanced fallback strategies for better address handling
         MapGeocoder::log_message("Trying enhanced fallback strategies for: street='{$street}', city='{$city}', province='{$province}'");
-        
+
         // Strategy 1: Try city + province only if we have a city
         if (!empty($city) && !empty($province)) {
             $fallback_result = MapGeocoder::geocode_address('', $city, $province);
@@ -2102,7 +2122,7 @@ class MapIntegration
                 return $fallback_result;
             }
         }
-        
+
         // Strategy 2: Try just the city if no province match
         if (!empty($city)) {
             $fallback_result = MapGeocoder::geocode_address('', $city, '');
@@ -2114,7 +2134,7 @@ class MapIntegration
                 return $fallback_result;
             }
         }
-        
+
         // Strategy 3: Try province only as last resort (but mark as very low confidence)
         if (!empty($province)) {
             $fallback_result = MapGeocoder::geocode_address('', '', $province);
@@ -2126,7 +2146,7 @@ class MapIntegration
                 return $fallback_result;
             }
         }
-        
+
         MapGeocoder::log_message("All enhanced fallback strategies failed");
         return false;
     }
@@ -2137,7 +2157,7 @@ class MapIntegration
     private function get_bulk_geocoding_status()
     {
         $status = get_transient('bulk_geocoding_status');
-        
+
         if (!$status) {
             return array(
                 'running' => false,
@@ -2147,7 +2167,7 @@ class MapIntegration
                 'progress_message' => 'Not running'
             );
         }
-        
+
         // Check if process appears stuck (no updates for 5 minutes)
         if ($status['running']) {
             $last_update = isset($status['started_at']) ? $status['started_at'] : 0;
@@ -2155,7 +2175,7 @@ class MapIntegration
                 $status['progress_message'] .= ' (Process may be stuck - click Stop and restart)';
             }
         }
-        
+
         return $status;
     }
 
@@ -2185,13 +2205,13 @@ class MapIntegration
             'zoom' => '7',
             'show_avatar' => 'false',
             'show_contact' => 'true',
-            'sort_by' => 'name', // name, last_name, city, location_count, date_registered
+            'sort_by' => 'last_name', // last_name, city
             'sort_order' => 'asc' // asc, desc
         ), $atts);
 
         // Get all chiropractor data
         $chiropractors = $this->get_chiropractor_directory_data($atts['user_role']);
-        
+
         if (empty($chiropractors)) {
             return '<div class="chiro-directory-container"><p>No chiropractors found.</p></div>';
         }
@@ -2228,6 +2248,12 @@ class MapIntegration
         // Results count placeholder (will be populated by JavaScript)
         $output .= '<div class="search-results-count" style="display: none;"></div>';
 
+        // Display total count of chiropractors
+        $total_count = count($chiropractors);
+        $output .= '<div class="chiro-directory-count">';
+        $output .= '<p class="chiropractor-tally">' . $total_count . ' chiropractor' . ($total_count !== 1 ? 's' : '') . ' found</p>';
+        $output .= '</div>';
+
         // Listings container
         $output .= '<div class="chiro-listings-grid">';
 
@@ -2255,6 +2281,28 @@ class MapIntegration
         ));
 
         foreach ($users as $user) {
+            // Filter out users who don't have pw_user_status equal to "approved"
+            $user_status = get_user_meta($user->ID, 'pw_user_status', true);
+            if ($user_status !== 'approved') {
+                continue;
+            }
+
+            // Filter out users who have "Student Membership" subscription type
+            if (class_exists('MeprUser')) {
+                $mepr_user = new MeprUser($user->ID);
+                $active_memberships = $mepr_user->active_product_subscriptions('products');
+                $has_student_membership = false;
+                foreach ($active_memberships as $membership) {
+                    if (isset($membership->post_title) && $membership->post_title === 'Student Membership') {
+                        $has_student_membership = true;
+                        break;
+                    }
+                }
+                if ($has_student_membership) {
+                    continue;
+                }
+            }
+
             $chiropractor_data = array(
                 'user_id' => $user->ID,
                 'display_name' => $user->display_name,
@@ -2270,7 +2318,7 @@ class MapIntegration
             // Define address sets for primary, secondary, and third addresses
             $address_sets = array(
                 '' => 'Primary',
-                '_2' => 'Secondary', 
+                '_2' => 'Secondary',
                 '_3' => 'Third'
             );
 
@@ -2278,7 +2326,7 @@ class MapIntegration
 
             foreach ($address_sets as $suffix => $label) {
                 $location_data = $this->get_single_location_data($user->ID, $suffix, $label);
-                
+
                 if ($location_data && $this->location_has_data($location_data)) {
                     $chiropractor_data['locations'][] = $location_data;
                     $has_locations = true;
@@ -2344,8 +2392,8 @@ class MapIntegration
      */
     private function location_has_data($location)
     {
-        return !empty($location['street']) || !empty($location['city']) || 
-               !empty($location['phone']) || !empty($location['email']);
+        return !empty($location['street']) || !empty($location['city']) ||
+            !empty($location['phone']) || !empty($location['email']);
     }
 
     /**
@@ -2353,13 +2401,10 @@ class MapIntegration
      */
     private function sort_chiropractors($chiropractors, $sort_by, $sort_order)
     {
-        usort($chiropractors, function($a, $b) use ($sort_by, $sort_order) {
+        usort($chiropractors, function ($a, $b) use ($sort_by, $sort_order) {
             $result = 0;
-            
+
             switch ($sort_by) {
-                case 'name':
-                    $result = strcasecmp($a['display_name'], $b['display_name']);
-                    break;
                 case 'last_name':
                     // Sort by last name, fall back to first name if last names are equal
                     $result = strcasecmp($a['last_name'], $b['last_name']);
@@ -2376,16 +2421,14 @@ class MapIntegration
                         $result = strcasecmp($a['display_name'], $b['display_name']);
                     }
                     break;
-                case 'location_count':
-                    $result = count($a['locations']) - count($b['locations']);
-                    break;
-                case 'date_registered':
-                    $result = strtotime($a['date_registered']) - strtotime($b['date_registered']);
-                    break;
                 default:
-                    $result = strcasecmp($a['display_name'], $b['display_name']);
+                    // Default to last name sorting
+                    $result = strcasecmp($a['last_name'], $b['last_name']);
+                    if ($result === 0) {
+                        $result = strcasecmp($a['first_name'], $b['first_name']);
+                    }
             }
-            
+
             return $sort_order === 'desc' ? -$result : $result;
         });
 
@@ -2406,6 +2449,16 @@ class MapIntegration
         $output .= '&times;';
         $output .= '</button>';
         $output .= '</div>';
+
+        // Add sort toggle section
+        $output .= '<div class="chiro-sort-controls">';
+        $output .= '<label class="sort-controls-label">Sort by:</label>';
+        $output .= '<div class="sort-buttons-container">';
+        $output .= '<button type="button" class="sort-button" data-sort="last_name" data-order="asc">Last Name (A-Z)</button>';
+        $output .= '<button type="button" class="sort-button active" data-sort="city" data-order="asc">City (A-Z)</button>';
+        $output .= '</div>';
+        $output .= '</div>';
+
         $output .= '</form>';
         $output .= '</div>';
 
@@ -2418,14 +2471,14 @@ class MapIntegration
     private function render_chiropractor_listing($chiropractor, $atts)
     {
         $output = '<div class="chiro-listing" data-user-id="' . esc_attr($chiropractor['user_id']) . '">';
-        
+
         // Header with basic info
         $output .= '<div class="chiro-header">';
-        
+
         // Basic info
         $output .= '<div class="chiro-info">';
         $output .= '<h3 class="chiro-name">';
-        
+
         // Make chiropractor name clickable to center on first location with coordinates
         $first_location_with_coords = null;
         foreach ($chiropractor['locations'] as $location) {
@@ -2434,7 +2487,7 @@ class MapIntegration
                 break;
             }
         }
-        
+
         if ($first_location_with_coords && $atts['show_map_links'] === 'true') {
             // Generate the clinic name exactly as it appears on the map
             $user = get_user_by('ID', $chiropractor['user_id']);
@@ -2443,13 +2496,13 @@ class MapIntegration
         } else {
             $output .= esc_html($chiropractor['display_name']);
         }
-        
+
         $output .= '</h3>';
-        
+
         if (!empty($chiropractor['bio'])) {
             $output .= '<div class="chiro-summary">' . esc_html(wp_trim_words($chiropractor['bio'], 20)) . '</div>';
         }
-        
+
         $output .= '</div>'; // Close chiro-info
         $output .= '</div>'; // Close chiro-header
 
@@ -2493,11 +2546,10 @@ class MapIntegration
         } else {
             $output = '<div class="location-item">';
         }
-        
+
         // Location name 
-        $location_display_name = !empty($location['name']) ? 
-            $location['name'] : 
-            ($chiropractor_name . ' - ' . $location['label'] . ' Location');
+        $location_display_name = !empty($location['name']) ?
+            $location['name'] : ($chiropractor_name . ' - ' . $location['label'] . ' Location');
 
         $output .= '<div class="location-name">';
         $output .= esc_html($location_display_name);
@@ -2511,15 +2563,15 @@ class MapIntegration
         // Contact information
         if ($atts['show_contact'] === 'true') {
             $contact_items = array();
-            
+
             if (!empty($location['phone'])) {
                 $contact_items[] = '<span class="location-phone">Phone: <a href="tel:' . esc_attr($location['phone']) . '" onclick="event.stopPropagation();">' . esc_html($location['phone']) . '</a></span>';
             }
-            
+
             if (!empty($location['email'])) {
                 $contact_items[] = '<span class="location-email">Email: <a href="mailto:' . esc_attr($location['email']) . '" onclick="event.stopPropagation();">' . esc_html($location['email']) . '</a></span>';
             }
-            
+
             if (!empty($location['website'])) {
                 $website_url = $location['website'];
                 if (!preg_match('/^https?:\/\//', $website_url)) {
@@ -2545,13 +2597,13 @@ class MapIntegration
     {
         $failed_key = 'mepr_clinic_geocode_failed' . $suffix;
         $failed_at_key = 'mepr_clinic_geocode_failed_at' . $suffix;
-        
+
         update_user_meta($user_id, $failed_key, $reason);
         update_user_meta($user_id, $failed_at_key, current_time('mysql'));
-        
+
         MapGeocoder::log_message("Marked user {$user_id} (suffix: {$suffix}) as failed geocoding: {$reason}");
     }
-    
+
     /**
      * Clear failed geocoding markers for a user
      */
@@ -2559,7 +2611,7 @@ class MapIntegration
     {
         $failed_key = 'mepr_clinic_geocode_failed' . $suffix;
         $failed_at_key = 'mepr_clinic_geocode_failed_at' . $suffix;
-        
+
         delete_user_meta($user_id, $failed_key);
         delete_user_meta($user_id, $failed_at_key);
     }

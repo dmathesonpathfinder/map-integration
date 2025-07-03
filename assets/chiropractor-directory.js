@@ -29,6 +29,135 @@
             this.cacheElements();
             this.bindEvents();
             this.prepareData();
+            this.initializeSortButtons();
+        },
+
+        // Initialize sort buttons functionality
+        initializeSortButtons: function () {
+            this.currentSort = 'name';
+            this.currentOrder = 'asc';
+        },
+
+        // Handle sort button click
+        handleSortClick: function (sortBy, sortOrder) {
+            // Update active button
+            $('.sort-button').removeClass('active');
+            $('.sort-button[data-sort="' + sortBy + '"][data-order="' + sortOrder + '"]').addClass('active');
+
+            this.currentSort = sortBy;
+            this.currentOrder = sortOrder;
+
+            this.sortListings(sortBy, sortOrder);
+        },
+
+        // Sort listings in the DOM
+        sortListings: function (sortBy, sortOrder) {
+            var self = this;
+            var $listings = $('.chiro-listing');
+            var listingsArray = $listings.toArray();
+
+            // Remove any existing city headings
+            $('.city-heading').remove();
+
+            listingsArray.sort(function (a, b) {
+                var $a = $(a);
+                var $b = $(b);
+                var result = 0;
+
+                switch (sortBy) {
+
+                    case 'last_name':
+                        // Extract last name from full name (assume format: "First Last" or "First Middle Last")
+                        var nameA = $a.find('.chiro-name').text().trim();
+                        var nameB = $b.find('.chiro-name').text().trim();
+                        var lastNameA = nameA.split(' ').pop();
+                        var lastNameB = nameB.split(' ').pop();
+                        result = lastNameA.localeCompare(lastNameB);
+                        if (result === 0) {
+                            result = nameA.localeCompare(nameB); // Fallback to full name
+                        }
+                        break;
+
+                    case 'city':
+                        var cityA = $a.find('.location-address').first().text().trim();
+                        var cityB = $b.find('.location-address').first().text().trim();
+                        // Extract city (assume format: "Street, City, Province")
+                        var cityPartsA = cityA.split(',');
+                        var cityPartsB = cityB.split(',');
+                        var extractedCityA = cityPartsA.length > 1 ? cityPartsA[1].trim() : cityA;
+                        var extractedCityB = cityPartsB.length > 1 ? cityPartsB[1].trim() : cityB;
+                        result = extractedCityA.localeCompare(extractedCityB);
+                        if (result === 0) {
+                            var nameA = $a.find('.chiro-name').text().trim();
+                            var nameB = $b.find('.chiro-name').text().trim();
+                            result = nameA.localeCompare(nameB); // Fallback to name
+                        }
+                        break;
+
+                    default:
+                        // Default to last name sorting
+                        var nameA = $a.find('.chiro-name').text().trim();
+                        var nameB = $b.find('.chiro-name').text().trim();
+                        var lastNameA = nameA.split(' ').pop();
+                        var lastNameB = nameB.split(' ').pop();
+                        result = lastNameA.localeCompare(lastNameB);
+                        if (result === 0) {
+                            result = nameA.localeCompare(nameB); // Fallback to full name
+                        }
+                }
+
+                return sortOrder === 'desc' ? -result : result;
+            });
+
+            // Reorder the DOM elements with city headings if sorting by city
+            var $container = $('.chiro-listings-grid');
+            $container.empty();
+
+            if (sortBy === 'city') {
+                // Group by city and add headings
+                var currentCity = '';
+                $.each(listingsArray, function (index, element) {
+                    var $element = $(element);
+                    var cityAddress = $element.find('.location-address').first().text().trim();
+                    var cityParts = cityAddress.split(',');
+                    var city = cityParts.length > 1 ? cityParts[1].trim() : cityAddress;
+
+                    if (city && city !== currentCity) {
+                        currentCity = city;
+                        var cityHeading = $('<div class="city-heading"><h4>' + self.escapeHtml(city) + '</h4></div>');
+                        $container.append(cityHeading);
+                    }
+
+                    $container.append(element);
+                });
+            } else {
+                // Normal reordering without headings
+                $.each(listingsArray, function (index, element) {
+                    $container.append(element);
+                });
+            }
+
+            // Update results count if search is active
+            if (this.currentFilter) {
+                this.updateResultsCount(this.getVisibleListingsCount(), this.currentFilter);
+            }
+        },
+
+        // Escape HTML for safety
+        escapeHtml: function (text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+        },
+
+        // Get count of visible listings
+        getVisibleListingsCount: function () {
+            return $('.chiro-listing:visible').length;
         },
 
         // Cache DOM elements
@@ -70,6 +199,15 @@
                     e.preventDefault();
                     self.performSearch();
                 }
+            });
+
+            // Sort button events
+            $(document).on('click', '.sort-button', function (e) {
+                e.preventDefault();
+                var $button = $(this);
+                var sortBy = $button.data('sort');
+                var sortOrder = $button.data('order');
+                self.handleSortClick(sortBy, sortOrder);
             });
         },
 
