@@ -142,6 +142,11 @@
     margin-top: 0;
 }
 
+/* Hide city headings with no visible results */
+.city-heading[style*="display: none"] {
+    display: none !important;
+}
+
 /* Directory container */
 .chiro-directory-container {
     max-width: 1200px;

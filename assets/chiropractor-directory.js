@@ -300,6 +300,8 @@
                 this.$listings.show();
                 this.clearHighlights();
                 this.updateResultsCount('');
+                // Show all city headings when no search
+                $('.city-heading').show();
                 return;
             }
 
@@ -315,8 +317,40 @@
                 }
             });
 
+            // Handle city headers visibility if sorting by city
+            if (this.currentSort === 'city') {
+                this.updateCityHeadersVisibility();
+            }
+
             this.updateResultsCount(visibleCount, query);
             this.handleNoResults(visibleCount);
+        },
+
+        // Update city headers visibility based on search results
+        updateCityHeadersVisibility: function () {
+            var self = this;
+            var $cityHeadings = $('.city-heading');
+
+            $cityHeadings.each(function () {
+                var $heading = $(this);
+                var $nextElements = $heading.nextUntil('.city-heading, :not(.chiro-listing)');
+                var $listings = $nextElements.filter('.chiro-listing');
+
+                // Count visible listings after this city heading
+                var visibleListings = 0;
+                $listings.each(function () {
+                    if ($(this).is(':visible')) {
+                        visibleListings++;
+                    }
+                });
+
+                // Show/hide the city heading based on visible listings
+                if (visibleListings > 0) {
+                    $heading.show();
+                } else {
+                    $heading.hide();
+                }
+            });
         },
 
         // Prepare search terms for highlighting
@@ -505,6 +539,8 @@
             this.clearHighlights();
             this.updateResultsCount('');
             this.handleNoResults(this.$listings.length);
+            // Show all city headings when clearing search
+            $('.city-heading').show();
             this.$searchInput.focus();
         }
     };
