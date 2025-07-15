@@ -271,8 +271,17 @@ class MapGeocoder
         ));
 
         if (is_wp_error($response)) {
+            $error_code = $response->get_error_code();
             $error_message = $response->get_error_message();
-            self::log_message("Google API request failed with WP_Error: {$error_message}");
+            
+            // Log detailed error for debugging
+            self::log_message("Google API request failed - Code: {$error_code}");
+            
+            // Don't expose detailed error messages to users
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                self::log_message("Debug - Error details: {$error_message}");
+            }
+            
             return false;
         }
 
@@ -387,8 +396,17 @@ class MapGeocoder
         ));
 
         if (is_wp_error($response)) {
+            $error_code = $response->get_error_code();
             $error_message = $response->get_error_message();
-            self::log_message("Nominatim API request failed with WP_Error: {$error_message}");
+            
+            // Log detailed error for debugging
+            self::log_message("Nominatim API request failed - Code: {$error_code}");
+            
+            // Don't expose detailed error messages to users
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                self::log_message("Debug - Error details: {$error_message}");
+            }
+            
             return false;
         }
 
@@ -618,6 +636,9 @@ class MapIntegration
 
         // Add admin menu
         add_action('admin_menu', array($this, 'add_admin_menu'));
+
+        // Add security headers for admin pages
+        add_action('admin_init', array($this, 'add_security_headers'));
 
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
@@ -2217,6 +2238,54 @@ class MapIntegration
         } else {
             wp_die('Invalid file access attempt.');
         }
+    }
+
+    /**
+     * Add security headers for admin pages
+     */
+    public function add_security_headers() {
+        if (is_admin()) {
+            header('X-Content-Type-Options: nosniff');
+            header('X-Frame-Options: DENY');
+            header('Referrer-Policy: strict-origin-when-cross-origin');
+        }
+    }
+
+    /**
+     * Validate address input comprehensively
+     * 
+     * @param string $address Address to validate
+     * @return string|false Validated address or false if invalid
+     */
+    public static function validate_address_input($address) {
+        // Basic sanitization
+        $address = sanitize_text_field($address);
+        
+        // Length validation
+        if (strlen($address) > 255) {
+            return false;
+        }
+        
+        // Pattern validation - basic address format
+        if (!preg_match('/^[a-zA-Z0-9\s,.\-#]+$/', $address)) {
+            return false;
+        }
+        
+        // Check for suspicious patterns
+        $suspicious_patterns = array(
+            '/script/i',
+            '/javascript/i',
+            '/eval\(/i',
+            '/expression\(/i'
+        );
+        
+        foreach ($suspicious_patterns as $pattern) {
+            if (preg_match($pattern, $address)) {
+                return false;
+            }
+        }
+        
+        return $address;
     }
 
     /**

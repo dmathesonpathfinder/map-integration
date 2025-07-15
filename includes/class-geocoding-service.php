@@ -100,7 +100,10 @@ class Map_Integration_Geocoding_Service
             self::log_message("Trying provider {$provider} for: {$address}");
             
             // Respect rate limits
-            self::enforce_rate_limit($provider);
+            if (!self::enforce_rate_limit($provider)) {
+                self::log_message("Rate limit exceeded for provider {$provider}, skipping");
+                continue;
+            }
             
             // Attempt geocoding
             $result = self::geocode_with_provider($provider, $address, $options);
@@ -435,11 +438,12 @@ class Map_Integration_Geocoding_Service
      * Enforce rate limiting for provider
      * 
      * @param string $provider Provider name
+     * @return bool True if rate limit is respected, false if exceeded maximum wait time
      */
     private static function enforce_rate_limit($provider)
     {
         if (!isset(self::$rate_limits[$provider])) {
-            return;
+            return true;
         }
         
         $rate_limit = self::$rate_limits[$provider];
@@ -449,10 +453,19 @@ class Map_Integration_Geocoding_Service
         
         if ($time_since_last < $min_interval) {
             $sleep_time = $min_interval - $time_since_last;
+            
+            // Add maximum sleep time to prevent blocking
+            $max_sleep = 5.0; // 5 seconds maximum
+            if ($sleep_time > $max_sleep) {
+                self::log_message("Rate limit exceeded maximum wait time for provider: {$provider}");
+                return false; // Fail the request instead of blocking indefinitely
+            }
+            
             usleep($sleep_time * 1000000); // Convert to microseconds
         }
         
         self::$rate_limits[$provider]['last_request_time'] = microtime(true);
+        return true;
     }
 
     /**
