@@ -34,14 +34,34 @@ class MapGeocoder
 
     private static $last_request_time = 0;
     /**
-     * Write to custom geocode log file
+     * Write to secure log using WordPress logging mechanism
      */
     public static function log_message($message)
     {
-        $log_file = MAP_INTEGRATION_PLUGIN_PATH . 'geocodelogs.txt';
+        // Use WordPress built-in logging when WP_DEBUG is enabled
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf('[Map Integration] %s', $message));
+        }
+        
+        // Alternative: Use WordPress uploads directory with proper security
+        $upload_dir = wp_upload_dir();
+        $log_dir = $upload_dir['basedir'] . '/map-integration-logs/';
+        
+        // Create directory if it doesn't exist
+        if (!file_exists($log_dir)) {
+            wp_mkdir_p($log_dir);
+            // Create .htaccess to prevent direct access
+            file_put_contents($log_dir . '.htaccess', "deny from all\n");
+        }
+        
+        $log_file = $log_dir . 'geocode-' . date('Y-m') . '.log';
         $timestamp = date('Y-m-d H:i:s');
         $log_entry = "[{$timestamp}] {$message}" . PHP_EOL;
-        file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
+        
+        // Validate file permissions and size before writing
+        if (is_writable($log_dir) && (!file_exists($log_file) || filesize($log_file) < 10485760)) { // 10MB limit
+            file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
+        }
     }
 
     /**
@@ -1119,8 +1139,10 @@ class MapIntegration
         // Get all clinic locations with coordinates (filtered by user role)
         $clinic_data = $this->get_all_clinic_coordinates($atts['user_role']);
 
-        // Output clinic data to browser console for debugging
-        echo '<script>console.log("Clinic Data:", ' . json_encode($clinic_data) . ');</script>';
+        // Only output debug information in development environment
+        if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) {
+            echo '<script>console.log("Clinic Data:", ' . wp_json_encode($clinic_data) . ');</script>';
+        }
 
         // Generate unique map ID
         $map_id = 'map-integration-' . uniqid();
@@ -2184,8 +2206,17 @@ class MapIntegration
      */
     public function geocoding_tools_page()
     {
-        // Include the geocoding test partial
-        include MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
+        $include_file = MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
+        
+        // Validate file exists and is within plugin directory
+        $real_file = realpath($include_file);
+        $plugin_dir = realpath(MAP_INTEGRATION_PLUGIN_PATH);
+        
+        if ($real_file && $plugin_dir && strpos($real_file, $plugin_dir) === 0) {
+            include $include_file;
+        } else {
+            wp_die('Invalid file access attempt.');
+        }
     }
 
     /**

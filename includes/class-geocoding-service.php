@@ -630,6 +630,13 @@ class Map_Integration_Geocoding_Service
         
         $table_name = $wpdb->prefix . self::$cache_table;
         
+        // Validate table name exists in the database
+        $valid_tables = array($wpdb->prefix . self::$cache_table);
+        if (!in_array($table_name, $valid_tables)) {
+            self::log_message("Invalid table name attempted: " . $table_name);
+            return 0;
+        }
+        
         $where = array();
         $where_values = array();
         
@@ -644,13 +651,14 @@ class Map_Integration_Geocoding_Service
             $where_values[] = $options['provider'];
         }
         
-        $query = "DELETE FROM {$table_name}";
+        // Build secure query with proper preparation
         if (!empty($where)) {
-            $query .= ' WHERE ' . implode(' AND ', $where);
-        }
-        
-        if (!empty($where_values)) {
-            $query = $wpdb->prepare($query, $where_values);
+            $query = $wpdb->prepare(
+                "DELETE FROM {$table_name} WHERE " . implode(' AND ', $where),
+                $where_values
+            );
+        } else {
+            $query = "DELETE FROM {$table_name}";
         }
         
         $deleted = $wpdb->query($query);
