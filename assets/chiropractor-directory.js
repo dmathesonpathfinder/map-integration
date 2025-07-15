@@ -200,6 +200,8 @@
                 if (e.which === 13) {
                     e.preventDefault();
                     self.performSearch();
+                    // Dismiss mobile keyboard
+                    $(this).blur();
                 }
             });
 

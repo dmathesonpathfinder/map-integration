@@ -2444,7 +2444,7 @@ class MapIntegration
         $output .= '<h3>Search Chiropractors</h3>';
         $output .= '<form id="chiro-search-form" role="search">';
         $output .= '<div id="chiro-search-wrapper">';
-        $output .= '<input type="text" id="chiro-search-input" placeholder="Search by name, location, or contact info..." autocomplete="off">';
+        $output .= '<input type="search" id="chiro-search-input" placeholder="Search by name, location, or contact info..." autocomplete="off" enterkeyhint="search">';
         $output .= '<button type="button" id="chiro-search-clear" aria-label="Clear search" style="display: none;">';
         $output .= '&times;';
         $output .= '</button>';
