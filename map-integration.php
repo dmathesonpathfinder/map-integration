@@ -21,6 +21,11 @@ define('MAP_INTEGRATION_VERSION', '1.0.0');
 define('MAP_INTEGRATION_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MAP_INTEGRATION_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
+// Security configuration constants
+define('MAP_INTEGRATION_MAX_LOG_SIZE', 5242880); // 5MB
+define('MAP_INTEGRATION_MAX_CACHE_ENTRIES', 10000);
+define('MAP_INTEGRATION_RATE_LIMIT_WINDOW', 60); // 1 minute
+
 // Load new classes and functions
 require_once MAP_INTEGRATION_PLUGIN_PATH . 'includes/class-street-parser.php';
 require_once MAP_INTEGRATION_PLUGIN_PATH . 'includes/class-geocoding-service.php';
@@ -38,30 +43,108 @@ class MapGeocoder
      */
     public static function log_message($message)
     {
+        // Sanitize message to prevent log injection
+        $message = self::sanitize_log_message($message);
+        
         // Use WordPress built-in logging when WP_DEBUG is enabled
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log(sprintf('[Map Integration] %s', $message));
         }
         
+        // Only allow file logging in secure environments
+        if (!self::is_file_logging_safe()) {
+            return;
+        }
+        
         // Alternative: Use WordPress uploads directory with proper security
         $upload_dir = wp_upload_dir();
+        if (!$upload_dir || isset($upload_dir['error']) || !is_writable($upload_dir['basedir'])) {
+            return;
+        }
+        
         $log_dir = $upload_dir['basedir'] . '/map-integration-logs/';
+        
+        // Validate log directory path
+        $real_upload_dir = realpath($upload_dir['basedir']);
+        $real_log_dir = realpath($log_dir);
         
         // Create directory if it doesn't exist
         if (!file_exists($log_dir)) {
-            wp_mkdir_p($log_dir);
-            // Create .htaccess to prevent direct access
-            file_put_contents($log_dir . '.htaccess', "deny from all\n");
+            if (!wp_mkdir_p($log_dir)) {
+                return;
+            }
+            // Create .htaccess to prevent direct access with more secure rules
+            $htaccess_content = "# Deny all access to log files\n" .
+                               "Order Deny,Allow\n" . 
+                               "Deny from all\n" .
+                               "<Files \"*.log\">\n" .
+                               "    Deny from all\n" .
+                               "</Files>\n";
+            
+            file_put_contents($log_dir . '.htaccess', $htaccess_content, LOCK_EX);
+            // Set restrictive permissions
+            chmod($log_dir, 0750);
         }
         
-        $log_file = $log_dir . 'geocode-' . date('Y-m') . '.log';
-        $timestamp = date('Y-m-d H:i:s');
+        // Additional path validation after directory creation
+        $real_log_dir = realpath($log_dir);
+        if (!$real_log_dir || !$real_upload_dir || strpos($real_log_dir, $real_upload_dir) !== 0) {
+            return;
+        }
+        
+        $log_file = $log_dir . 'geocode-' . sanitize_file_name(date('Y-m')) . '.log';
+        $timestamp = current_time('mysql');
         $log_entry = "[{$timestamp}] {$message}" . PHP_EOL;
         
         // Validate file permissions and size before writing
-        if (is_writable($log_dir) && (!file_exists($log_file) || filesize($log_file) < 10485760)) { // 10MB limit
+        if (is_writable($log_dir) && (!file_exists($log_file) || filesize($log_file) < 5242880)) { // 5MB limit
             file_put_contents($log_file, $log_entry, FILE_APPEND | LOCK_EX);
+            // Set restrictive file permissions
+            if (file_exists($log_file)) {
+                chmod($log_file, 0640);
+            }
         }
+    }
+
+    /**
+     * Sanitize log message to prevent log injection
+     * 
+     * @param string $message Raw log message
+     * @return string Sanitized log message
+     */
+    private static function sanitize_log_message($message)
+    {
+        // Remove control characters and newlines to prevent log injection
+        $message = preg_replace('/[\x00-\x1F\x7F]/', '', $message);
+        
+        // Limit message length
+        $message = substr($message, 0, 1000);
+        
+        // Remove potentially dangerous patterns
+        $message = str_replace(array('[', ']'), array('(', ')'), $message);
+        
+        return trim($message);
+    }
+
+    /**
+     * Check if file logging is safe in current environment
+     * 
+     * @return bool Whether file logging should be allowed
+     */
+    private static function is_file_logging_safe()
+    {
+        // Disable file logging in production unless explicitly enabled
+        if (defined('WP_ENVIRONMENT_TYPE') && WP_ENVIRONMENT_TYPE === 'production') {
+            return defined('MAP_INTEGRATION_ALLOW_FILE_LOGGING') && MAP_INTEGRATION_ALLOW_FILE_LOGGING;
+        }
+        
+        // Check if uploads directory is secure
+        $upload_dir = wp_upload_dir();
+        if (!$upload_dir || isset($upload_dir['error'])) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**
@@ -69,10 +152,29 @@ class MapGeocoder
      */
     public static function geocode_address($street, $city, $province)
     {
+        // Validate and clean inputs
+        $street = self::validate_address_input($street);
+        $city = self::validate_address_input($city);
+        $province = self::validate_address_input($province);
+        
+        // If any critical validation fails, return false
+        if (($street !== false && $street !== null && $street !== '') && $street === false) {
+            self::log_message("Address validation failed for street: " . substr($street, 0, 50));
+            return false;
+        }
+        if (($city !== false && $city !== null && $city !== '') && $city === false) {
+            self::log_message("Address validation failed for city: " . substr($city, 0, 50));
+            return false;
+        }
+        if (($province !== false && $province !== null && $province !== '') && $province === false) {
+            self::log_message("Address validation failed for province: " . substr($province, 0, 50));
+            return false;
+        }
+
         // Clean and normalize inputs
-        $street = self::clean_address_part($street);
-        $city = self::clean_address_part($city);
-        $province = self::clean_address_part($province);
+        $street = self::clean_address_part($street ?: '');
+        $city = self::clean_address_part($city ?: '');
+        $province = self::clean_address_part($province ?: '');
 
         // Try multiple address combinations in order of specificity
         $address_variations = self::build_address_variations($street, $city, $province);
@@ -80,16 +182,16 @@ class MapGeocoder
         foreach ($address_variations as $address) {
             if (empty($address)) continue;
 
-            self::log_message("Trying geocode for: {$address}");
+            self::log_message("Trying geocode for: " . substr($address, 0, 100));
             $coordinates = self::try_geocode($address);
 
             if ($coordinates) {
-                self::log_message("Successfully geocoded: {$address}");
+                self::log_message("Successfully geocoded: " . substr($address, 0, 100));
                 return $coordinates;
             }
         }
 
-        self::log_message("All geocoding attempts failed for: street={$street}, city={$city}, province={$province}");
+        self::log_message("All geocoding attempts failed for: street=" . substr($street, 0, 50) . ", city=" . substr($city, 0, 50) . ", province=" . substr($province, 0, 50));
         return false;
     }
 
@@ -261,7 +363,13 @@ class MapGeocoder
             'key' => $api_key
         ));
 
-        self::log_message("Making Google API request to: " . str_replace($api_key, '[API_KEY]', $url));
+        // Log request without exposing the API key
+        $safe_url = 'https://maps.googleapis.com/maps/api/geocode/json?' . http_build_query(array(
+            'address' => substr($address, 0, 50) . (strlen($address) > 50 ? '...' : ''),
+            'region' => 'ca',
+            'key' => '[API_KEY_HIDDEN]'
+        ));
+        self::log_message("Making Google API request to: " . $safe_url);
 
         $response = wp_remote_get($url, array(
             'timeout' => 10,
@@ -704,11 +812,29 @@ class MapIntegration
      */
     public function admin_page()
     {
+        // Security check - ensure user has proper capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
+
         // Handle Google API key setting
         if (isset($_POST['save_settings']) && wp_verify_nonce($_POST['_wpnonce'], 'save_settings_action')) {
             $google_api_key = sanitize_text_field($_POST['google_api_key']);
-            update_option('map_integration_google_api_key', $google_api_key);
-            echo '<div class="notice notice-success"><p>Settings saved successfully.</p></div>';
+            
+            // Additional validation for API key format
+            if (!empty($google_api_key)) {
+                // Google API keys should be alphanumeric with specific length
+                if (!preg_match('/^[A-Za-z0-9_-]{35,45}$/', $google_api_key)) {
+                    echo '<div class="notice notice-error"><p>Invalid Google API key format. Please check your API key.</p></div>';
+                } else {
+                    update_option('map_integration_google_api_key', $google_api_key);
+                    echo '<div class="notice notice-success"><p>Settings saved successfully.</p></div>';
+                }
+            } else {
+                // Allow empty API key (disables Google geocoding)
+                update_option('map_integration_google_api_key', '');
+                echo '<div class="notice notice-success"><p>Google API key removed. Nominatim will be used for geocoding.</p></div>';
+            }
         }
 
         // Enqueue admin scripts for AJAX functionality
@@ -717,7 +843,6 @@ class MapIntegration
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('bulk_geocoding_control')
         ));
-
 
         // Handle bulk geocoding action
         if (isset($_POST['bulk_geocode']) && wp_verify_nonce($_POST['_wpnonce'], 'bulk_geocode_action')) {
@@ -729,7 +854,7 @@ class MapIntegration
             $this->clear_all_geocoding_data();
         }
 
-        // Handle clear geocoding data action
+        // Handle clear geocoding data action (duplicate handling removed)
         if (isset($_POST['clear_geocoding_data']) && wp_verify_nonce($_POST['_wpnonce'], 'clear_geocoding_data_action')) {
             $this->clear_all_geocoding_data();
         }
@@ -1160,17 +1285,162 @@ class MapIntegration
         // Get all clinic locations with coordinates (filtered by user role)
         $clinic_data = $this->get_all_clinic_coordinates($atts['user_role']);
 
+        // Sanitize clinic data for safe output in JavaScript
+        $sanitized_clinic_data = array();
+        foreach ($clinic_data as $clinic) {
+            $sanitized_clinic_data[] = array(
+                'lat' => floatval($clinic['lat']),
+                'lng' => floatval($clinic['lng']),
+                'name' => sanitize_text_field($clinic['name']),
+                'address' => sanitize_text_field($clinic['address']),
+                'phone' => sanitize_text_field($clinic['phone']),
+                'email' => sanitize_email($clinic['email']),
+                'website' => esc_url_raw($clinic['website']),
+                'user_id' => intval($clinic['user_id']),
+                'suffix' => sanitize_text_field($clinic['suffix'])
+            );
+        }
+
         // Only output debug information in development environment
         if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) {
-            echo '<script>console.log("Clinic Data:", ' . wp_json_encode($clinic_data) . ');</script>';
+            echo '<script>console.log("Clinic Data:", ' . wp_json_encode($sanitized_clinic_data) . ');</script>';
         }
 
         // Generate unique map ID
-        $map_id = 'map-integration-' . uniqid();
+        $map_id = 'map-integration-' . wp_generate_uuid4();
 
         // Create map HTML
         $output = '<div id="' . esc_attr($map_id) . '" class="map-integration-leaflet" style="width: ' . esc_attr($atts['width']) . '; height: ' . esc_attr($atts['height']) . ';"></div>';
-        $output .= "<script type=\"text/javascript\">\n        document.addEventListener(\"DOMContentLoaded\", function() {\n            function initializeMap() {\n                if (typeof L === \"undefined\" || typeof L.Control === \"undefined\") {\n                    setTimeout(initializeMap, 100);\n                    return;\n                }\n                try {\n                    var map = L.map(\"" . esc_js($map_id) . "\").setView([" . floatval($atts['center_lat']) . ", " . floatval($atts['center_lng']) . "], " . intval($atts['zoom']) . ");\n                    var tileLayer = L.tileLayer(\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\", {\n                        attribution: \"&copy; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap</a> contributors\",\n                        maxZoom: 18\n                    });\n                    tileLayer.addTo(map);\n                    var clinics = " . json_encode($clinic_data) . ";\n                    var bounds = [];\n                    var markers = [];\n                    clinics.forEach(function(clinic, index) {\n                        if (clinic.lat && clinic.lng) {\n                            var marker = L.marker([clinic.lat, clinic.lng]).addTo(map);\n                            marker.bindPopup((clinic.name ? '<h4>' + clinic.name + '</h4>' : '') +\n                                (clinic.address ? '<p>' + clinic.address + '</p>' : '') +\n                                (clinic.phone ? '<p>Phone: <a href=\"tel:' + clinic.phone + '\">' + clinic.phone + '</a></p>' : '') +\n                                (clinic.email ? '<p>Email: <a href=\"mailto:' + clinic.email + '\">' + clinic.email + '</a></p>' : '') +\n                                (clinic.website ? '<p>Website: <a href=\"' + clinic.website + '\" target=\"_blank\">'+clinic.website+'</a></p>' : ''));\n                            marker.clinicName = clinic.name || '';\n                            markers.push(marker);\n                            bounds.push([clinic.lat, clinic.lng]);\n                        }\n                    });\n                    if (bounds.length > 0) {\n                        map.fitBounds(bounds, {padding: [20, 20]});\n                    }\n                    if (typeof L.Control.Search !== \"undefined\") {\n                        var markerLayer = L.layerGroup(markers);\n                        var searchControl = new L.Control.Search({\n                            layer: markerLayer,\n                            propertyName: 'clinicName',\n                            marker: false,\n                            moveToLocation: function(latlng, title, map) {\n                                map.setView(latlng, 14);\n                            }\n                        });\n                        searchControl.on('search:locationfound', function(e) {\n                            if (e.layer._popup) e.layer.openPopup();\n                        });\n                        map.addControl(searchControl);\n                    }\n                    setTimeout(function() { if (map) { map.invalidateSize(); } }, 250);\n\n                    // Add global function to center on a clinic by name\n                    window.centerMapOnClinic = function(clinicName) {\n                        var found = false;\n                        markers.forEach(function(marker) {\n                            if (marker.clinicName && marker.clinicName.toLowerCase() === clinicName.toLowerCase()) {\n                                // First scroll to the map\n                                var mapElement = document.getElementById(\"" . esc_js($map_id) . "\");\n                                if (mapElement) {\n                                    mapElement.scrollIntoView({ \n                                        behavior: 'smooth', \n                                        block: 'center' \n                                    });\n                                }\n                                \n                                // Then center the map on the clinic\n                                setTimeout(function() {\n                                    map.setView(marker.getLatLng(), 13, {\n                                        animate: true,\n                                        duration: 1.5\n                                    });\n                                    setTimeout(function() {\n                                        marker.openPopup();\n                                    }, 1600);\n                                }, 500); // Wait for scroll to complete\n                                found = true;\n                                return false;\n                            }\n                        });\n                        if (!found) {\n                            console.log('Available clinics:', markers.map(function(m) { return m.clinicName; }));\n                            alert('Clinic \\\"' + clinicName + '\\\" not found on map.');\n                        }\n                    };\n                } catch (error) {\n                    console.error(\"Map initialization error:\", error);\n                    document.getElementById(\"" . esc_js($map_id) . "\").innerHTML = \"<div style=\\\"padding: 20px; text-align: center; color: #666;\\\">Error loading map. Please refresh the page.</div>\";\n                }\n            }\n            initializeMap();\n        });\n        </script>";
+        
+        // Generate secure JavaScript using wp_json_encode for proper escaping
+        $output .= '<script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            function initializeMap() {
+                if (typeof L === "undefined" || typeof L.Control === "undefined") {
+                    setTimeout(initializeMap, 100);
+                    return;
+                }
+                try {
+                    var mapId = ' . wp_json_encode($map_id) . ';
+                    var centerLat = ' . floatval($atts['center_lat']) . ';
+                    var centerLng = ' . floatval($atts['center_lng']) . ';
+                    var zoomLevel = ' . intval($atts['zoom']) . ';
+                    
+                    var map = L.map(mapId).setView([centerLat, centerLng], zoomLevel);
+                    var tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                        attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
+                        maxZoom: 18
+                    });
+                    tileLayer.addTo(map);
+                    
+                    var clinics = ' . wp_json_encode($sanitized_clinic_data) . ';
+                    var bounds = [];
+                    var markers = [];
+                    
+                    clinics.forEach(function(clinic, index) {
+                        if (clinic.lat && clinic.lng) {
+                            var marker = L.marker([clinic.lat, clinic.lng]).addTo(map);
+                            
+                            // Build popup content with proper escaping
+                            var popupContent = "";
+                            if (clinic.name) {
+                                popupContent += "<h4>" + clinic.name + "</h4>";
+                            }
+                            if (clinic.address) {
+                                popupContent += "<p>" + clinic.address + "</p>";
+                            }
+                            if (clinic.phone) {
+                                popupContent += "<p>Phone: <a href=\"tel:" + clinic.phone + "\">" + clinic.phone + "</a></p>";
+                            }
+                            if (clinic.email) {
+                                popupContent += "<p>Email: <a href=\"mailto:" + clinic.email + "\">" + clinic.email + "</a></p>";
+                            }
+                            if (clinic.website) {
+                                popupContent += "<p>Website: <a href=\"" + clinic.website + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + clinic.website + "</a></p>";
+                            }
+                            
+                            marker.bindPopup(popupContent);
+                            marker.clinicName = clinic.name || "";
+                            markers.push(marker);
+                            bounds.push([clinic.lat, clinic.lng]);
+                        }
+                    });
+                    
+                    if (bounds.length > 0) {
+                        map.fitBounds(bounds, {padding: [20, 20]});
+                    }
+                    
+                    if (typeof L.Control.Search !== "undefined") {
+                        var markerLayer = L.layerGroup(markers);
+                        var searchControl = new L.Control.Search({
+                            layer: markerLayer,
+                            propertyName: "clinicName",
+                            marker: false,
+                            moveToLocation: function(latlng, title, map) {
+                                map.setView(latlng, 14);
+                            }
+                        });
+                        searchControl.on("search:locationfound", function(e) {
+                            if (e.layer._popup) e.layer.openPopup();
+                        });
+                        map.addControl(searchControl);
+                    }
+                    
+                    setTimeout(function() { 
+                        if (map) { 
+                            map.invalidateSize(); 
+                        } 
+                    }, 250);
+
+                    // Add global function to center on a clinic by name
+                    window.centerMapOnClinic = function(clinicName) {
+                        if (!clinicName || typeof clinicName !== "string") {
+                            return false;
+                        }
+                        
+                        var found = false;
+                        markers.forEach(function(marker) {
+                            if (marker.clinicName && marker.clinicName.toLowerCase() === clinicName.toLowerCase()) {
+                                // First scroll to the map
+                                var mapElement = document.getElementById(mapId);
+                                if (mapElement) {
+                                    mapElement.scrollIntoView({ 
+                                        behavior: "smooth", 
+                                        block: "center" 
+                                    });
+                                }
+                                
+                                // Then center the map on the clinic
+                                setTimeout(function() {
+                                    map.setView(marker.getLatLng(), 13, {
+                                        animate: true,
+                                        duration: 1.5
+                                    });
+                                    setTimeout(function() {
+                                        marker.openPopup();
+                                    }, 1600);
+                                }, 500);
+                                found = true;
+                                return false;
+                            }
+                        });
+                        
+                        if (!found) {
+                            console.log("Available clinics:", markers.map(function(m) { return m.clinicName; }));
+                            alert("Clinic \"" + clinicName + "\" not found on map.");
+                        }
+                    };
+                } catch (error) {
+                    console.error("Map initialization error:", error);
+                    var mapElement = document.getElementById(mapId);
+                    if (mapElement) {
+                        mapElement.innerHTML = "<div style=\"padding: 20px; text-align: center; color: #666;\">Error loading map. Please refresh the page.</div>";
+                    }
+                }
+            }
+            initializeMap();
+        });
+        </script>';
 
         return $output;
     }
@@ -1565,25 +1835,46 @@ class MapIntegration
             $city_key = 'mepr_clinic_city' . $suffix;
             $province_key = 'mepr_clinic_province' . $suffix;
             $lat_key = 'mepr_clinic_lat' . $suffix;
+            $failed_key = 'mepr_clinic_geocode_failed' . $suffix;
 
-            // Get users with address data
-            $users = $wpdb->get_results($wpdb->prepare("
+            // Get users with address data but no coordinates - using prepared statements
+            $query = "
                 SELECT DISTINCT u.ID, u.display_name
                 FROM {$wpdb->users} u
                 INNER JOIN {$wpdb->usermeta} um ON u.ID = um.user_id
-                WHERE (um.meta_key = %s OR um.meta_key = %s) AND um.meta_value != ''
+                WHERE (um.meta_key = %s OR um.meta_key = %s) 
+                AND um.meta_value != ''
                 AND u.ID NOT IN (
                     SELECT user_id FROM {$wpdb->usermeta} 
                     WHERE meta_key = %s AND meta_value != ''
                 )
-            ", $street_key, $city_key, 'mepr_clinic_geocode_failed' . $suffix));
+                AND u.ID NOT IN (
+                    SELECT user_id FROM {$wpdb->usermeta} 
+                    WHERE meta_key = %s AND meta_value != ''
+                )
+                LIMIT 1000
+            ";
+            
+            $users = $wpdb->get_results($wpdb->prepare(
+                $query,
+                $street_key,
+                $city_key,
+                $lat_key,
+                $failed_key
+            ));
 
             foreach ($users as $user) {
-                $street = get_user_meta($user->ID, $street_key, true);
-                $city = get_user_meta($user->ID, $city_key, true);
-                $province = get_user_meta($user->ID, $province_key, true);
-                $lat = get_user_meta($user->ID, $lat_key, true);
-                $lng = get_user_meta($user->ID, 'mepr_clinic_lng' . $suffix, true);
+                // Validate user ID
+                $user_id = self::validate_user_id($user->ID);
+                if (!$user_id) {
+                    continue;
+                }
+
+                $street = get_user_meta($user_id, $street_key, true);
+                $city = get_user_meta($user_id, $city_key, true);
+                $province = get_user_meta($user_id, $province_key, true);
+                $lat = get_user_meta($user_id, $lat_key, true);
+                $lng = get_user_meta($user_id, 'mepr_clinic_lng' . $suffix, true);
 
                 // Only include addresses with street or city data (exclude province-only)
                 if (!empty($street) || !empty($city)) {
@@ -1593,19 +1884,19 @@ class MapIntegration
                     if (empty($lat) || empty($lng) || floatval($lat) == 0 || floatval($lng) == 0) {
                         // No coordinates or invalid coordinates
                         $needs_geocoding = true;
-                    } elseif (MapGeocoder::is_province_level_coordinate($lat, $suffix, $user->ID)) {
+                    } elseif (MapGeocoder::is_province_level_coordinate($lat, $suffix, $user_id)) {
                         // Province-level coordinates that need improvement
                         $needs_geocoding = true;
                     }
 
                     if ($needs_geocoding) {
                         $non_geocoded[] = array(
-                            'user_id' => $user->ID,
-                            'user_name' => $user->display_name,
+                            'user_id' => $user_id,
+                            'user_name' => sanitize_text_field($user->display_name),
                             'type' => $label,
-                            'street' => $street,
-                            'city' => $city,
-                            'province' => $province
+                            'street' => sanitize_text_field($street),
+                            'city' => sanitize_text_field($city),
+                            'province' => sanitize_text_field($province)
                         );
                     }
                 }
@@ -1810,17 +2101,28 @@ class MapIntegration
         // Check user permissions
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Insufficient permissions');
+            return;
         }
 
         // Check nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
-            wp_send_json_error('Invalid nonce');
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid security token');
+            return;
         }
+
+        // Rate limiting - prevent rapid fire requests
+        $last_request = get_transient('bulk_geocoding_last_request_' . get_current_user_id());
+        if ($last_request && (time() - $last_request) < 5) {
+            wp_send_json_error('Please wait before starting another geocoding operation');
+            return;
+        }
+        set_transient('bulk_geocoding_last_request_' . get_current_user_id(), time(), 60);
 
         // Check if already running
         $status = get_transient('bulk_geocoding_status');
         if ($status && $status['running']) {
             wp_send_json_error('Bulk geocoding is already running');
+            return;
         }
 
         // Start the process
@@ -1837,11 +2139,13 @@ class MapIntegration
         // Check user permissions
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Insufficient permissions');
+            return;
         }
 
         // Check nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
-            wp_send_json_error('Invalid nonce');
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid security token');
+            return;
         }
 
         // Stop the process
@@ -1858,11 +2162,13 @@ class MapIntegration
         // Check user permissions
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Insufficient permissions');
+            return;
         }
 
         // Check nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
-            wp_send_json_error('Invalid nonce');
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bulk_geocoding_control')) {
+            wp_send_json_error('Invalid security token');
+            return;
         }
 
         // Get current status
@@ -2227,27 +2533,87 @@ class MapIntegration
      */
     public function geocoding_tools_page()
     {
-        $include_file = MAP_INTEGRATION_PLUGIN_PATH . 'admin/partials/geocoding-test.php';
+        // Security check - ensure user has proper capabilities
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
         
-        // Validate file exists and is within plugin directory
+        // Whitelist of allowed files to prevent path traversal
+        $allowed_files = array(
+            'geocoding-test.php' => 'admin/partials/geocoding-test.php'
+        );
+        
+        $file_key = 'geocoding-test.php';
+        
+        if (!isset($allowed_files[$file_key])) {
+            wp_die(__('Invalid file access attempt.'));
+        }
+        
+        $include_file = MAP_INTEGRATION_PLUGIN_PATH . $allowed_files[$file_key];
+        
+        // Multiple layers of path validation
         $real_file = realpath($include_file);
         $plugin_dir = realpath(MAP_INTEGRATION_PLUGIN_PATH);
         
-        if ($real_file && $plugin_dir && strpos($real_file, $plugin_dir) === 0) {
-            include $include_file;
-        } else {
-            wp_die('Invalid file access attempt.');
+        // Validate file exists, is within plugin directory, and has correct extension
+        if (!$real_file || 
+            !$plugin_dir || 
+            strpos($real_file, $plugin_dir) !== 0 ||
+            !file_exists($real_file) ||
+            pathinfo($real_file, PATHINFO_EXTENSION) !== 'php' ||
+            !is_readable($real_file)) {
+            
+            self::log_message("Security: Invalid file access attempt blocked: " . esc_html($include_file));
+            wp_die(__('Security error: Invalid file access attempt.'));
         }
+        
+        // Additional security check - ensure file is in expected location
+        $expected_path = $plugin_dir . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'partials' . DIRECTORY_SEPARATOR . 'geocoding-test.php';
+        if ($real_file !== realpath($expected_path)) {
+            self::log_message("Security: File path mismatch blocked");
+            wp_die(__('Security error: File path validation failed.'));
+        }
+        
+        include $real_file;
     }
 
     /**
-     * Add security headers for admin pages
+     * Add comprehensive security headers for admin pages
      */
     public function add_security_headers() {
         if (is_admin()) {
+            // Prevent MIME type sniffing
             header('X-Content-Type-Options: nosniff');
+            
+            // Prevent clickjacking
             header('X-Frame-Options: DENY');
+            
+            // Referrer policy for privacy
             header('Referrer-Policy: strict-origin-when-cross-origin');
+            
+            // XSS protection (for older browsers)
+            header('X-XSS-Protection: 1; mode=block');
+            
+            // Content Security Policy for admin pages
+            $csp_directives = array(
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://maps.googleapis.com",
+                "style-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+                "img-src 'self' data: https: http:",
+                "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+                "connect-src 'self' https://nominatim.openstreetmap.org https://maps.googleapis.com",
+                "frame-src 'none'",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "form-action 'self'"
+            );
+            
+            header('Content-Security-Policy: ' . implode('; ', $csp_directives));
+            
+            // Prevent caching of sensitive admin pages
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
         }
     }
 
@@ -2262,30 +2628,123 @@ class MapIntegration
         $address = sanitize_text_field($address);
         
         // Length validation
-        if (strlen($address) > 255) {
+        if (strlen($address) > 255 || strlen($address) < 1) {
             return false;
         }
         
-        // Pattern validation - basic address format
-        if (!preg_match('/^[a-zA-Z0-9\s,.\-#]+$/', $address)) {
+        // Enhanced pattern validation - stricter address format
+        if (!preg_match('/^[a-zA-Z0-9\s,.\-#\'\(\)\/]+$/', $address)) {
             return false;
         }
         
-        // Check for suspicious patterns
+        // Check for suspicious patterns that could indicate injection attempts
         $suspicious_patterns = array(
-            '/script/i',
-            '/javascript/i',
-            '/eval\(/i',
-            '/expression\(/i'
+            '/script\s*[\/\>]/i',
+            '/javascript\s*:/i',
+            '/eval\s*\(/i',
+            '/expression\s*\(/i',
+            '/vbscript\s*:/i',
+            '/on\w+\s*=/i',
+            '/<\s*\w+/i',
+            '/\{\s*\{/',
+            '/exec\s*\(/i',
+            '/system\s*\(/i',
+            '/passthru\s*\(/i',
+            '/shell_exec\s*\(/i',
+            '/`[^`]*`/',
+            '/\$\s*\{/',
+            '/\<\?\s*(php)?\s/i'
         );
         
         foreach ($suspicious_patterns as $pattern) {
             if (preg_match($pattern, $address)) {
+                self::log_message("Security: Suspicious address pattern blocked: " . substr($address, 0, 50));
+                return false;
+            }
+        }
+        
+        // Check for directory traversal attempts
+        $traversal_patterns = array(
+            '/\.\.\//',
+            '/\.\.\\\\/',
+            '/\.\.\%2f/i',
+            '/\.\.\%5c/i',
+            '/\%2e\%2e\%2f/i',
+            '/\%2e\%2e\%5c/i'
+        );
+        
+        foreach ($traversal_patterns as $pattern) {
+            if (preg_match($pattern, $address)) {
+                self::log_message("Security: Directory traversal attempt blocked in address input");
+                return false;
+            }
+        }
+        
+        // Additional validation - check for common XSS vectors
+        $xss_patterns = array(
+            '/alert\s*\(/i',
+            '/confirm\s*\(/i',
+            '/prompt\s*\(/i',
+            '/document\s*\./i',
+            '/window\s*\./i',
+            '/location\s*\./i'
+        );
+        
+        foreach ($xss_patterns as $pattern) {
+            if (preg_match($pattern, $address)) {
+                self::log_message("Security: XSS attempt blocked in address input");
                 return false;
             }
         }
         
         return $address;
+    }
+
+    /**
+     * Validate and sanitize user ID input
+     * 
+     * @param mixed $user_id User ID to validate
+     * @return int|false Valid user ID or false if invalid
+     */
+    public static function validate_user_id($user_id) {
+        // Convert to integer
+        $user_id = intval($user_id);
+        
+        // Basic validation
+        if ($user_id <= 0) {
+            return false;
+        }
+        
+        // Check if user exists
+        if (!get_userdata($user_id)) {
+            return false;
+        }
+        
+        return $user_id;
+    }
+
+    /**
+     * Validate coordinates input
+     * 
+     * @param mixed $lat Latitude
+     * @param mixed $lng Longitude
+     * @return array|false Valid coordinates or false if invalid
+     */
+    public static function validate_coordinates($lat, $lng) {
+        $lat = floatval($lat);
+        $lng = floatval($lng);
+        
+        // Check valid ranges
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return false;
+        }
+        
+        // Reject null island coordinates (likely invalid)
+        if ($lat == 0 && $lng == 0) {
+            return false;
+        }
+        
+        return array('lat' => $lat, 'lng' => $lng);
     }
 
     /**
@@ -2765,3 +3224,98 @@ class MapIntegration
 
 // Initialize the plugin
 new MapIntegration();
+
+/**
+ * Security Configuration and Additional Safeguards
+ */
+
+// Hook to add additional security measures on plugin activation
+register_activation_hook(__FILE__, function() {
+    // Set default security options
+    add_option('map_integration_security_headers', true);
+    add_option('map_integration_file_logging_enabled', false);
+    add_option('map_integration_rate_limiting_enabled', true);
+    
+    // Create secure log directory structure
+    $upload_dir = wp_upload_dir();
+    if (!is_wp_error($upload_dir)) {
+        $log_dir = $upload_dir['basedir'] . '/map-integration-logs/';
+        if (!file_exists($log_dir)) {
+            wp_mkdir_p($log_dir);
+            
+            // Create comprehensive .htaccess for security
+            $htaccess_content = "# Map Integration Security Configuration\n" .
+                               "# Deny all access to this directory\n" .
+                               "Order Deny,Allow\n" . 
+                               "Deny from all\n" .
+                               "<Files \"*.log\">\n" .
+                               "    Deny from all\n" .
+                               "</Files>\n" .
+                               "<Files \"*.txt\">\n" .
+                               "    Deny from all\n" .
+                               "</Files>\n" .
+                               "# Prevent directory browsing\n" .
+                               "Options -Indexes\n" .
+                               "# Prevent script execution\n" .
+                               "php_flag engine off\n";
+            
+            file_put_contents($log_dir . '.htaccess', $htaccess_content, LOCK_EX);
+            
+            // Create index.php to prevent directory listing
+            file_put_contents($log_dir . 'index.php', "<?php\n// Silence is golden\n", LOCK_EX);
+        }
+    }
+});
+
+// Security headers for frontend (not just admin)
+add_action('wp_head', function() {
+    if (get_option('map_integration_security_headers', true)) {
+        echo '<meta http-equiv="X-Content-Type-Options" content="nosniff">' . "\n";
+        echo '<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">' . "\n";
+    }
+});
+
+// Clean up on plugin deactivation
+register_deactivation_hook(__FILE__, function() {
+    // Clear any sensitive transients
+    delete_transient('bulk_geocoding_status');
+    
+    // Clear rate limiting data
+    global $wpdb;
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE 'bulk_geocoding_last_request_%'");
+});
+
+// Add security audit logging
+add_action('wp_login_failed', function($username) {
+    if (class_exists('MapGeocoder')) {
+        MapGeocoder::log_message("Security: Failed login attempt for user: " . sanitize_user($username));
+    }
+});
+
+// Monitor for suspicious activity
+add_action('wp_loaded', function() {
+    // Check for potential security issues in requests
+    if (isset($_REQUEST['map_integration_debug']) && !defined('WP_DEBUG')) {
+        if (class_exists('MapGeocoder')) {
+            MapGeocoder::log_message("Security: Debug parameter detected in non-debug environment");
+        }
+    }
+});
+
+// Cleanup old log files periodically
+add_action('wp_scheduled_delete', function() {
+    $upload_dir = wp_upload_dir();
+    if (!is_wp_error($upload_dir)) {
+        $log_dir = $upload_dir['basedir'] . '/map-integration-logs/';
+        if (is_dir($log_dir)) {
+            $files = glob($log_dir . '*.log');
+            $cutoff_time = time() - (90 * DAY_IN_SECONDS); // 90 days
+            
+            foreach ($files as $file) {
+                if (filemtime($file) < $cutoff_time) {
+                    unlink($file);
+                }
+            }
+        }
+    }
+});

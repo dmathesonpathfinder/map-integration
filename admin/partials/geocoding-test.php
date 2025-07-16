@@ -21,13 +21,24 @@ $parse_result = null;
 $error_message = '';
 $success_message = '';
 
+// Security check - ensure user has proper capabilities
+if (!current_user_can('manage_options')) {
+    wp_die(__('You do not have sufficient permissions to access this page.'));
+}
+
 if (isset($_POST['test_geocoding']) && wp_verify_nonce($_POST['_wpnonce'], 'test_geocoding')) {
     $test_address = sanitize_text_field($_POST['test_address']);
     
+    // Additional validation for test address
     if (!empty($test_address)) {
-        $test_result = geocode_address($test_address);
-        if (!$test_result) {
-            $error_message = 'Geocoding failed for the provided address.';
+        $validated_address = MapIntegration::validate_address_input($test_address);
+        if ($validated_address !== false) {
+            $test_result = geocode_address($validated_address);
+            if (!$test_result) {
+                $error_message = 'Geocoding failed for the provided address.';
+            }
+        } else {
+            $error_message = 'Invalid address format. Please check your input.';
         }
     } else {
         $error_message = 'Please enter an address to test.';
@@ -37,8 +48,14 @@ if (isset($_POST['test_geocoding']) && wp_verify_nonce($_POST['_wpnonce'], 'test
 if (isset($_POST['test_parsing']) && wp_verify_nonce($_POST['_wpnonce'], 'test_parsing')) {
     $parse_address = sanitize_text_field($_POST['parse_address']);
     
+    // Additional validation for parse address
     if (!empty($parse_address)) {
-        $parse_result = parse_street_address($parse_address);
+        $validated_address = MapIntegration::validate_address_input($parse_address);
+        if ($validated_address !== false) {
+            $parse_result = parse_street_address($validated_address);
+        } else {
+            $error_message = 'Invalid address format. Please check your input.';
+        }
     } else {
         $error_message = 'Please enter an address to parse.';
     }
@@ -46,16 +63,16 @@ if (isset($_POST['test_parsing']) && wp_verify_nonce($_POST['_wpnonce'], 'test_p
 
 if (isset($_POST['clear_cache']) && wp_verify_nonce($_POST['_wpnonce'], 'clear_cache')) {
     $cleared_count = clear_geocoding_cache();
-    $success_message = "Cleared {$cleared_count} geocoding cache entries.";
+    $success_message = "Cleared " . intval($cleared_count) . " geocoding cache entries.";
 }
 
 if (isset($_POST['clear_old_cache']) && wp_verify_nonce($_POST['_wpnonce'], 'clear_old_cache')) {
     $days = intval($_POST['cache_days']);
-    if ($days > 0) {
+    if ($days > 0 && $days <= 365) {
         $cleared_count = clear_geocoding_cache(array('older_than' => $days * DAY_IN_SECONDS));
-        $success_message = "Cleared {$cleared_count} geocoding cache entries older than {$days} days.";
+        $success_message = "Cleared " . intval($cleared_count) . " geocoding cache entries older than " . intval($days) . " days.";
     } else {
-        $error_message = 'Please enter a valid number of days.';
+        $error_message = 'Please enter a valid number of days (1-365).';
     }
 }
 
@@ -219,15 +236,19 @@ $cache_stats = get_geocoding_cache_stats();
                     <script>
                     jQuery(document).ready(function($) {
                         if (typeof L !== 'undefined') {
-                            var map = L.map('test-map').setView([<?php echo $test_result['latitude']; ?>, <?php echo $test_result['longitude']; ?>], 15);
+                            var lat = <?php echo floatval($test_result['latitude']); ?>;
+                            var lng = <?php echo floatval($test_result['longitude']); ?>;
+                            var displayName = <?php echo wp_json_encode($test_result['display_name']); ?>;
+                            
+                            var map = L.map('test-map').setView([lat, lng], 15);
                             
                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                                 attribution: '© OpenStreetMap contributors'
                             }).addTo(map);
                             
-                            L.marker([<?php echo $test_result['latitude']; ?>, <?php echo $test_result['longitude']; ?>])
+                            L.marker([lat, lng])
                                 .addTo(map)
-                                .bindPopup('<?php echo esc_js($test_result['display_name']); ?>')
+                                .bindPopup(displayName)
                                 .openPopup();
                         } else {
                             $('#test-map').html('<p>Map preview requires Leaflet.js to be loaded.</p>');

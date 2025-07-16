@@ -477,30 +477,45 @@ class Map_Integration_Geocoding_Service
      */
     private static function make_http_request($url, $timeout = 10)
     {
-        self::log_message("Making API request to: {$url}");
+        // Validate URL to prevent SSRF attacks
+        if (!self::is_safe_url($url)) {
+            self::log_message("Security: Unsafe URL blocked");
+            return false;
+        }
+        
+        // Sanitize URL for logging (remove sensitive parameters)
+        $safe_url = self::sanitize_url_for_logging($url);
+        self::log_message("Making API request to: " . $safe_url);
         
         $args = array(
-            'timeout' => $timeout,
+            'timeout' => max(5, min(30, intval($timeout))), // Enforce timeout limits
             'user-agent' => 'MapIntegration/1.0.0 WordPress Plugin',
             'headers' => array(
                 'Accept' => 'application/json'
-            )
+            ),
+            'sslverify' => true, // Enforce SSL verification
+            'httpversion' => '1.1'
         );
         
         $response = wp_remote_get($url, $args);
         
         if (is_wp_error($response)) {
-            self::log_message("HTTP request error: " . $response->get_error_message());
+            $error_message = $response->get_error_message();
+            // Don't log sensitive information
+            $safe_error = preg_replace('/key=[^&\s]+/', 'key=[HIDDEN]', $error_message);
+            self::log_message("HTTP request error: " . $safe_error);
             return false;
         }
         
         $status_code = wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
         
-        self::log_message("API Response: Code {$status_code}");
+        self::log_message("API Response: Code " . $status_code);
         
         if ($status_code !== 200) {
-            self::log_message("API error response: {$body}");
+            // Limit error response logging to prevent information disclosure
+            $safe_body = substr($body, 0, 200);
+            self::log_message("API error response: " . $safe_body);
             return false;
         }
         
@@ -513,6 +528,53 @@ class Map_Integration_Geocoding_Service
             'body' => $body,
             'status_code' => $status_code
         );
+    }
+
+    /**
+     * Check if URL is safe for external requests
+     * 
+     * @param string $url URL to validate
+     * @return bool Whether URL is safe
+     */
+    private static function is_safe_url($url)
+    {
+        // Parse URL
+        $parsed = parse_url($url);
+        if (!$parsed || !isset($parsed['scheme']) || !isset($parsed['host'])) {
+            return false;
+        }
+        
+        // Only allow HTTPS
+        if ($parsed['scheme'] !== 'https') {
+            return false;
+        }
+        
+        // Whitelist allowed hosts
+        $allowed_hosts = array(
+            'nominatim.openstreetmap.org',
+            'maps.googleapis.com'
+        );
+        
+        if (!in_array($parsed['host'], $allowed_hosts)) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * Sanitize URL for safe logging
+     * 
+     * @param string $url URL to sanitize
+     * @return string Sanitized URL
+     */
+    private static function sanitize_url_for_logging($url)
+    {
+        // Remove API keys and other sensitive parameters
+        $url = preg_replace('/[?&]key=[^&]+/', '&key=[HIDDEN]', $url);
+        $url = preg_replace('/[?&]q=([^&]{50})[^&]*/', '&q=$1...', $url);
+        
+        return $url;
     }
 
     /**
