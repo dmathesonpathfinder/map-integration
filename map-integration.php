@@ -3,8 +3,8 @@
 /**
  * Plugin Name: Map Integration
  * Plugin URI: https://example.com/map-integration
- * Description: A minimal plugin for integrating maps into your WordPress site.
- * Version: 1.0.0
+ * Description: A secure WordPress plugin for integrating maps into your site with comprehensive geocoding capabilities.
+ * Version: 1.0.1
  * Author: Danny Dollars
  * License: GPL      
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MAP_INTEGRATION_VERSION', '1.0.0');
+define('MAP_INTEGRATION_VERSION', '1.0.1');
 define('MAP_INTEGRATION_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MAP_INTEGRATION_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
