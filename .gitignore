@@ -1,13 +1,32 @@
 # Exclude log files
 geocodelogs.txt
-
-# Exclude common development files
-.DS_Store
-Thumbs.db
 *.log
 *.tmp
 *.temp
 
+# Security test results (optional)
+security-test-results.html
+security-scan-*.txt
+
+# Exclude common development files
+.DS_Store
+Thumbs.db
+
 # WordPress specific
 wp-config.php
 .htaccess
+
+# Development and testing files
+/test-uploads/
+/backup-*/
+/security-testing/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Composer
+/vendor/
+composer.lock
