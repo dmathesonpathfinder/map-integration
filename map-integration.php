@@ -1498,18 +1498,13 @@ class MapIntegration
                     continue;
                 }
 
-                // Filter out users who have "Student Membership" subscription type
+                // Filter out users who don't have an active MemberPress subscription
                 if (class_exists('MeprUser')) {
                     $mepr_user = new MeprUser($user->ID);
                     $active_memberships = $mepr_user->active_product_subscriptions('products');
-                    $has_student_membership = false;
-                    foreach ($active_memberships as $membership) {
-                        if (isset($membership->post_title) && $membership->post_title === 'Student Membership') {
-                            $has_student_membership = true;
-                            break;
-                        }
-                    }
-                    if ($has_student_membership) {
+                    
+                    // Skip user if they have no active subscriptions
+                    if (empty($active_memberships)) {
                         continue;
                     }
                 }
@@ -2594,20 +2589,19 @@ class MapIntegration
             // XSS protection (for older browsers)
             header('X-XSS-Protection: 1; mode=block');
             
-            // Content Security Policy for admin pages
-            $csp_directives = array(
-                "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://maps.googleapis.com",
-                "style-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com",
-                "img-src 'self' data: https: http:",
-                "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-                "connect-src 'self' https://nominatim.openstreetmap.org https://maps.googleapis.com",
-                "frame-src 'none'",
-                "object-src 'none'",
-                "base-uri 'self'",
-                "form-action 'self'"
-            );
-            
+       // Content Security Policy for admin pages
+$csp_directives = array(
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://maps.googleapis.com https://www.google.com https://apis.google.com",
+    "style-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com https://use.fontawesome.com",
+    "img-src 'self' data: blob: https: http:",
+    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://use.fontawesome.com",
+    "connect-src 'self' https://nominatim.openstreetmap.org https://maps.googleapis.com https://www.googleapis.com",
+    "frame-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'"
+);
             header('Content-Security-Policy: ' . implode('; ', $csp_directives));
             
             // Prevent caching of sensitive admin pages
@@ -2846,18 +2840,13 @@ class MapIntegration
                 continue;
             }
 
-            // Filter out users who have "Student Membership" subscription type
+            // Filter out users who don't have an active MemberPress subscription
             if (class_exists('MeprUser')) {
                 $mepr_user = new MeprUser($user->ID);
                 $active_memberships = $mepr_user->active_product_subscriptions('products');
-                $has_student_membership = false;
-                foreach ($active_memberships as $membership) {
-                    if (isset($membership->post_title) && $membership->post_title === 'Student Membership') {
-                        $has_student_membership = true;
-                        break;
-                    }
-                }
-                if ($has_student_membership) {
+                
+                // Skip user if they have no active subscriptions
+                if (empty($active_memberships)) {
                     continue;
                 }
             }
